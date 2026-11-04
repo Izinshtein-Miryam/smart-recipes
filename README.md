@@ -105,6 +105,19 @@ cd backend
 .venv/bin/alembic upgrade head
 ```
 
+## ניהול משימות
+
+המשימות מנוהלות ב-GitHub Issues: לכל אזור יש Epic (תווית `epic`) עם sub-issues, אבני דרך M1 עד M4, ותוויות של שכבה, עדיפות וגודל.
+
+לוח GitHub Projects נוצר פעם אחת כך:
+
+```bash
+gh auth refresh -s project
+./scripts/setup-github-project.sh
+```
+
+כדי שכל issue חדש יתווסף ללוח אוטומטית, מגדירים בריפו משתנה `PROJECT_URL` וסוד `PROJECT_TOKEN` (טוקן עם הרשאת project). את שניהם מפעיל `.github/workflows/add-to-project.yml`.
+
 ## מצב נוכחי
 
 מומש: מודל הנתונים המלא, הרשמה/התחברות/הרשאות לפי תפקיד, קטלוג (רשימה עם מסננים ועימוד, מתכון עם חישוב מנות), שכבות ה-AI עם מימושי mock, שלד הממשק עם כל הנתיבים מאב-הטיפוס.
