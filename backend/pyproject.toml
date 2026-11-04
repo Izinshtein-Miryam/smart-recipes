@@ -15,13 +15,12 @@ dependencies = [
   "bcrypt>=4.2",
   "python-multipart>=0.0.17",
   "sse-starlette>=2.1",
-  "anthropic>=0.40",
+  "openai>=1.60",
   "pillow>=11.0",
 ]
 
 [project.optional-dependencies]
 # Heavy / external providers - installed only when needed.
-images = ["google-genai>=1.0"]
 embeddings = ["sentence-transformers>=3.3"]
 dev = [
   "pytest>=8.3",
@@ -61,7 +60,7 @@ plugins = ["pydantic.mypy"]
 exclude = ["alembic/versions"]
 
 [[tool.mypy.overrides]]
-module = ["sentence_transformers.*", "google.genai.*"]
+module = ["sentence_transformers.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
@@ -69,4 +68,4 @@ testpaths = ["tests"]
 addopts = "--cov=app --cov-report=term-missing --cov-fail-under=70"
 
 [tool.coverage.run]
-omit = ["app/cli.py", "app/services/images/gemini.py", "app/services/embeddings/sentence.py"]
+omit = ["app/cli.py", "app/services/embeddings/sentence.py"]

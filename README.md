@@ -1,6 +1,6 @@
 # מתכונים חכם
 
-אתר מתכונים בעברית (RTL) עם ניווט חכם, יצירה חכמה והמלצות, מבוסס Claude API.
+אתר מתכונים בעברית (RTL) עם ניווט חכם, יצירה חכמה והמלצות, מבוסס OpenAI API.
 פרויקט לימוד והדגמה שרץ מקומית.
 
 - אפיון: [`docs/SPEC.md`](docs/SPEC.md)
@@ -16,7 +16,7 @@ backend/            FastAPI + SQLAlchemy 2 + Alembic (Python 3.12)
     domain/         לוגיקה טהורה: בדיקת בשר/חלב, חישוב מנות
     models/         טבלאות מסד הנתונים לפי האפיון
     schemas/        סכמות Pydantic לבקשות ותגובות
-    services/       שכבות AI: ai (Claude), images (ImageProvider), embeddings
+    services/       שכבות AI: ai (OpenAI LLM), images (ImageProvider), embeddings
     seed/           נתוני דמה ופקודת seed
     cli.py          create-sysadmin, seed
   alembic/          מיגרציות
@@ -51,10 +51,19 @@ cp .env.example .env
 
 ב-Windows מחליפים את `.venv/bin/` ב-`.venv\Scripts\`.
 
-ספקי AI אמיתיים (אופציונלי): ממלאים מפתחות ב-`backend/.env`, משנים את `LLM_PROVIDER` / `IMAGE_PROVIDER` / `EMBEDDING_PROVIDER`, ומתקינים את התוספות הנדרשות:
+ספקי AI אמיתיים (אופציונלי): כל יכולות ה-AI עובדות עם מפתח OpenAI יחיד. ממלאים ב-`backend/.env`:
+
+```
+OPENAI_API_KEY=sk-...
+LLM_PROVIDER=openai
+IMAGE_PROVIDER=openai
+EMBEDDING_PROVIDER=openai
+```
+
+את שמות המודלים אפשר לשנות דרך `OPENAI_MODEL`, `OPENAI_IMAGE_MODEL` ו-`OPENAI_EMBEDDING_MODEL`. לחלופין, ל-embeddings מקומיים בלי קריאות API מגדירים `EMBEDDING_PROVIDER=sentence` ומתקינים את התוספת:
 
 ```bash
-uv pip install --python .venv/bin/python -e ".[images,embeddings]"
+uv pip install --python .venv/bin/python -e ".[embeddings]"
 ```
 
 כברירת מחדל כל הספקים במצב `mock`, כך שאפשר לפתח ולהריץ בדיקות בלי מפתחות.

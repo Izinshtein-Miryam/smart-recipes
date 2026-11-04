@@ -19,16 +19,20 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["http://localhost:5173"]
     media_dir: Path = Path("./media")
 
-    llm_provider: Literal["mock", "anthropic"] = "mock"
-    anthropic_api_key: str = ""
-    claude_model: str = "claude-sonnet-5-5"
+    # A single OpenAI key serves text, images and (optionally) embeddings.
+    openai_api_key: str = ""
+
+    llm_provider: Literal["mock", "openai"] = "mock"
+    openai_model: str = "gpt-5-mini"
     ai_timeout_seconds: float = 30.0
 
-    image_provider: Literal["mock", "gemini"] = "mock"
-    gemini_api_key: str = ""
+    image_provider: Literal["mock", "openai"] = "mock"
+    openai_image_model: str = "gpt-image-1"
+    image_timeout_seconds: float = 120.0
 
-    embedding_provider: Literal["mock", "sentence"] = "mock"
+    embedding_provider: Literal["mock", "sentence", "openai"] = "mock"
     embedding_model: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+    openai_embedding_model: str = "text-embedding-3-small"
 
 
 @lru_cache
