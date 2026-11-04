@@ -19,3 +19,10 @@ export const difficultyLabels: Record<Difficulty, string> = {
   medium: 'בינוני',
   hard: 'מאתגר',
 };
+
+export const dietLabels: Record<string, string> = {
+  gluten_free: 'ללא גלוטן',
+  vegan: 'טבעוני',
+  sugar_free: 'ללא סוכר',
+  nut_free: 'ללא אגוזים',
+};

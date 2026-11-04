@@ -40,6 +40,13 @@ class RecipeSource(StrEnum):
     AI = "ai"
 
 
+class DietTag(StrEnum):
+    GLUTEN_FREE = "gluten_free"
+    VEGAN = "vegan"
+    SUGAR_FREE = "sugar_free"
+    NUT_FREE = "nut_free"
+
+
 class TimeTag(StrEnum):
     MORNING = "morning"
     NOON = "noon"

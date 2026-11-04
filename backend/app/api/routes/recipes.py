@@ -1,12 +1,13 @@
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query, status
-from sqlalchemy import func, select
+from sqlalchemy import String, cast, func, select
 from sqlalchemy.orm import selectinload
 
 from app.core.deps import DbSession
 from app.domain.servings import scale_quantity
 from app.models import Difficulty, DishType, KosherType, Recipe, RecipeIngredient, RecipeStatus
+from app.models.enums import DietTag
 from app.schemas.recipe import IngredientLine, Page, RecipeCard, RecipeDetail, StepOut
 
 router = APIRouter(prefix="/recipes", tags=["recipes"])
@@ -19,6 +20,9 @@ def list_recipes(
     dish_type: DishType | None = None,
     difficulty: Difficulty | None = None,
     max_minutes: Annotated[int | None, Query(ge=1)] = None,
+    diet: Annotated[
+        list[DietTag] | None, Query(description="מגבלות תזונה (כולן חייבות להתקיים)")
+    ] = None,
     q: Annotated[str | None, Query(max_length=100)] = None,
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 24,
@@ -32,6 +36,8 @@ def list_recipes(
         stmt = stmt.where(Recipe.difficulty == difficulty)
     if max_minutes:
         stmt = stmt.where(Recipe.prep_minutes + Recipe.cook_minutes <= max_minutes)
+    for tag in diet or []:
+        stmt = stmt.where(cast(Recipe.diet_tags, String).contains(f'"{tag.value}"'))
     if q:
         stmt = stmt.where(Recipe.title.contains(q))
 

@@ -75,3 +75,23 @@ def test_get_missing_recipe(client: TestClient) -> None:
 
 def test_seed_is_idempotent(seeded_db: Session) -> None:
     assert seed(seeded_db) == 0
+
+
+def test_diet_filter(client: TestClient, seeded_db: Session) -> None:
+    def slugs(*tags: str) -> set[str]:
+        res = client.get("/api/recipes", params={"diet": list(tags), "page_size": 100})
+        assert res.status_code == 200
+        return {r["slug"] for r in res.json()["items"]}
+
+    gluten_free = slugs("gluten_free")
+    vegan = slugs("vegan")
+    both = slugs("gluten_free", "vegan")
+    all_recipes = seeded_db.query(Recipe).all()
+    expected = {r.slug for r in all_recipes if {"gluten_free", "vegan"} <= set(r.diet_tags)}
+    assert 0 < len(vegan) < len(gluten_free) < 50
+    assert both == expected == gluten_free & vegan
+    assert slugs() == {r.slug for r in all_recipes}
+
+
+def test_diet_filter_rejects_unknown_tag(client: TestClient) -> None:
+    assert client.get("/api/recipes", params={"diet": "lorem"}).status_code == 422

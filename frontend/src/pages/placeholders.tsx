@@ -1,7 +1,6 @@
 /** Screens from the prototype that are not implemented yet. Replace one by one. */
 import { Placeholder } from '@/components/Placeholder';
 
-export const SearchPage = () => <Placeholder title="חיפוש" />;
 export const CookPage = () => <Placeholder title="מצב בישול" />;
 export const GeneratePage = () => <Placeholder title="יצירה חכמה" />;
 export const ShoppingPage = () => <Placeholder title="רשימת קניות" />;

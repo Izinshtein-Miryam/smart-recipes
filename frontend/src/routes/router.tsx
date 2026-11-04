@@ -4,13 +4,14 @@ import { Layout } from '@/components/Layout';
 import { HomePage } from '@/pages/HomePage';
 import * as P from '@/pages/placeholders';
 import { RecipePage } from '@/pages/RecipePage';
+import { SearchPage } from '@/pages/SearchPage';
 
 export const routes: RouteObject[] = [
   {
     element: <Layout />,
     children: [
       { index: true, element: <HomePage /> },
-      { path: 'search', element: <P.SearchPage /> },
+      { path: 'search', element: <SearchPage /> },
       { path: 'recipe/:slug', element: <RecipePage /> },
       { path: 'generate', element: <P.GeneratePage /> },
       { path: 'shopping', element: <P.ShoppingPage /> },
