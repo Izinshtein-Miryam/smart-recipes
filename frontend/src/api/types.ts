@@ -1,59 +1,55 @@
-/** Mirrors backend Pydantic schemas (app/schemas). Keep in sync, or generate from /openapi.json. */
+/** Mirrors backend/app/schemas. Keep in sync when the API changes. */
 
-export type KosherType = 'meat' | 'dairy' | 'parve';
-export type DishType = 'starter' | 'main' | 'side' | 'dessert' | 'baked';
+export type Lang = 'he' | 'en';
 export type Difficulty = 'easy' | 'medium' | 'hard';
-export type Role = 'user' | 'content_manager' | 'sysadmin';
+export type Equipment = 'oven' | 'stovetop' | 'one_pot' | 'no_cook';
+export type Kashrut = 'meat' | 'dairy' | 'parve';
+export type RecipeStatus = 'pending' | 'approved' | 'rejected';
 
-export interface RecipeCard {
-  id: number;
-  slug: string;
-  title: string;
-  description: string;
-  kosher_type: KosherType;
-  dish_type: DishType;
-  difficulty: Difficulty;
-  total_minutes: number;
-  diet_tags: string[];
-  source: 'admin' | 'ai';
-}
-
-export interface IngredientLine {
-  ingredient_id: number;
+export interface Ingredient {
   name: string;
   quantity: number | null;
   unit: string | null;
   note: string | null;
 }
 
-export interface Step {
-  order: number;
-  text: string;
-  timer_seconds: number | null;
-  ingredient_ids: number[];
+export interface Nutrition {
+  calories: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+  confidence: 'low' | 'medium' | 'high' | null;
 }
 
-export interface RecipeDetail extends RecipeCard {
-  prep_minutes: number;
-  cook_minutes: number;
+export interface RecipeSummary {
+  id: string;
+  lang: Lang;
+  title: string;
+  description: string;
   servings: number;
-  time_tags: string[];
-  ingredients: IngredientLine[];
-  steps: Step[];
+  prep_minutes: number;
+  difficulty: Difficulty;
+  equipment: Equipment[];
+  kashrut: Kashrut;
+  image_url: string | null;
+}
+
+export interface Recipe extends RecipeSummary {
+  ingredients: Ingredient[];
+  steps: string[];
+  nutrition: Nutrition | null;
+  status: RecipeStatus;
+  source_recipe_id: string | null;
   created_at: string;
+  approved_at: string | null;
 }
 
-export interface Page<T> {
-  items: T[];
-  total: number;
-  page: number;
-  page_size: number;
-}
-
-export interface User {
-  id: number;
-  email: string;
-  display_name: string;
-  role: Role;
-  dietary_prefs: string[];
+export interface RecipeFilters {
+  lang?: Lang;
+  q?: string;
+  max_minutes?: number;
+  difficulty?: Difficulty;
+  equipment?: Equipment[];
+  servings?: number;
+  kashrut?: Kashrut;
 }

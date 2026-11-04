@@ -1,0 +1,40 @@
+{
+  "app": { "name": "סיר ומחבת" },
+  "nav": {
+    "label": "ניווט ראשי",
+    "recipes": "מתכונים",
+    "fridge": "מה יש במקרר?",
+    "submit": "הוספת מתכון",
+    "admin": "ניהול"
+  },
+  "lang": { "switchTo": "English" },
+  "common": {
+    "loading": "טוען…",
+    "loadError": "שגיאה בטעינת הנתונים",
+    "aiUnavailable": "השירות החכם אינו זמין כרגע, נסו שוב בעוד רגע",
+    "comingSoon": "המסך הזה עדיין בבנייה",
+    "minutes": "דק'",
+    "servings": "מנות",
+    "ingredients": "מרכיבים",
+    "steps": "שלבי הכנה"
+  },
+  "kashrut": { "meat": "בשרי", "dairy": "חלבי", "parve": "פרווה" },
+  "difficulty": { "easy": "קל", "medium": "בינוני", "hard": "מאתגר" },
+  "home": {
+    "title": "בישול ביתי, פשוט וטעים.",
+    "empty": "עדיין אין מתכונים מאושרים"
+  },
+  "recipe": {
+    "nutrition": "ערכים תזונתיים למנה (משוער)",
+    "calories": "קלוריות",
+    "protein": "חלבון",
+    "carbs": "פחמימות",
+    "fat": "שומן",
+    "notFound": "המתכון לא נמצא"
+  },
+  "fridge": { "title": "מה יש לי במקרר" },
+  "adapted": { "title": "מתכון מותאם" },
+  "submit": { "title": "הגשת מתכון" },
+  "admin": { "loginTitle": "כניסת מנהל", "queueTitle": "תור אישורים" },
+  "notFound": { "title": "העמוד לא נמצא" }
+}

@@ -16,8 +16,10 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.105.3",
+    "i18next": "^26.7.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
+    "react-i18next": "^17.1.12",
     "react-router": "^8.5.1"
   },
   "devDependencies": {

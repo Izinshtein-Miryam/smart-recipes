@@ -7,6 +7,23 @@ on:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: recipes
+          POSTGRES_PASSWORD: recipes
+          POSTGRES_DB: recipes
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U recipes"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql+psycopg://recipes:recipes@localhost:5432/recipes
+      TEST_DATABASE_URL: postgresql+psycopg://recipes:recipes@localhost:5432/recipes
     defaults:
       run:
         working-directory: backend
@@ -24,10 +41,8 @@ jobs:
         run: .venv/bin/ruff check . && .venv/bin/ruff format --check .
       - name: Mypy
         run: .venv/bin/mypy app tests
-      - name: Migrations apply cleanly
-        run: .venv/bin/alembic upgrade head
-        env:
-          DATABASE_URL: sqlite:///./ci.db
+      - name: Migrations apply cleanly and match the models
+        run: .venv/bin/alembic upgrade head && .venv/bin/alembic check
       - name: Tests (coverage >= 70%)
         run: .venv/bin/pytest
 

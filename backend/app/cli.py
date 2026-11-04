@@ -1,58 +1,46 @@
-"""Management commands.
-
-Usage:
-    python -m app.cli create-sysadmin --email admin@example.com --name "מנהל"
-    python -m app.cli seed
-"""
+"""Maintenance commands: `python -m app.cli <command>`."""
 
 import argparse
 import getpass
-import sys
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
 
+from app.config import get_settings
 from app.core.security import hash_password
 from app.db import SessionLocal
-from app.models import Role, User
-from app.seed import seed
+from app.models import Recipe, RecipeStatus
+from app.services import storage
 
 
-def create_sysadmin(email: str, name: str, password: str | None) -> None:
-    password = password or getpass.getpass("Password: ")
-    if len(password) < 8:
-        sys.exit("Password must be at least 8 characters")
+def hash_admin_password() -> None:
+    """Prints a bcrypt hash to put in ADMIN_PASSWORD_HASH (wrap it in single quotes in .env files)."""
+    print(hash_password(getpass.getpass("Admin password: ")))
+
+
+def purge_rejected() -> None:
+    """Deletes images of recipes rejected more than N days ago (default 7)."""
+    cutoff = datetime.now(UTC) - timedelta(days=get_settings().rejected_image_retention_days)
     with SessionLocal() as db:
-        if db.scalar(select(User).where(User.email == email.lower())):
-            sys.exit(f"User {email} already exists")
-        db.add(
-            User(
-                email=email.lower(),
-                password_hash=hash_password(password),
-                display_name=name,
-                role=Role.SYSADMIN,
-            )
+        stmt = select(Recipe).where(
+            Recipe.status == RecipeStatus.REJECTED,
+            Recipe.image_path.is_not(None),
+            Recipe.created_at < cutoff,
         )
+        recipes = list(db.scalars(stmt))
+        for recipe in recipes:
+            if recipe.image_path:
+                storage.delete(recipe.image_path)
+            recipe.image_path = None
         db.commit()
-    print(f"System admin {email} created")
+    print(f"purged {len(recipes)} image(s)")
 
 
-def main(argv: list[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(prog="python -m app.cli")
-    sub = parser.add_subparsers(dest="command", required=True)
-
-    p_admin = sub.add_parser("create-sysadmin", help="Create the first system admin")
-    p_admin.add_argument("--email", required=True)
-    p_admin.add_argument("--name", default="מנהל מערכת")
-    p_admin.add_argument("--password", help="Prompted if omitted")
-
-    sub.add_parser("seed", help="Load demo recipes")
-
-    args = parser.parse_args(argv)
-    if args.command == "create-sysadmin":
-        create_sysadmin(args.email, args.name, args.password)
-    elif args.command == "seed":
-        with SessionLocal() as db:
-            print(f"Seeded {seed(db)} recipes")
+def main() -> None:
+    parser = argparse.ArgumentParser(prog="app.cli")
+    parser.add_argument("command", choices=["hash-admin-password", "purge-rejected"])
+    args = parser.parse_args()
+    {"hash-admin-password": hash_admin_password, "purge-rejected": purge_rejected}[args.command]()
 
 
 if __name__ == "__main__":

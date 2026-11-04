@@ -8,21 +8,17 @@ dependencies = [
   "uvicorn[standard]>=0.32",
   "pydantic>=2.9",
   "pydantic-settings>=2.6",
-  "email-validator>=2.2",
   "sqlalchemy>=2.0.36",
   "alembic>=1.14",
+  "psycopg[binary]>=3.2",
+  "openai>=1.60",
   "pyjwt>=2.10",
   "bcrypt>=4.2",
   "python-multipart>=0.0.17",
   "sse-starlette>=2.1",
-  "anthropic>=0.40",
-  "pillow>=11.0",
 ]
 
 [project.optional-dependencies]
-# Heavy / external providers - installed only when needed.
-images = ["google-genai>=1.0"]
-embeddings = ["sentence-transformers>=3.3"]
 dev = [
   "pytest>=8.3",
   "pytest-cov>=6.0",
@@ -38,9 +34,6 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 include = ["app*"]
-
-[tool.setuptools.package-data]
-app = ["seed/*.json"]
 
 [tool.ruff]
 line-length = 100
@@ -60,13 +53,9 @@ strict = true
 plugins = ["pydantic.mypy"]
 exclude = ["alembic/versions"]
 
-[[tool.mypy.overrides]]
-module = ["sentence_transformers.*", "google.genai.*"]
-ignore_missing_imports = true
-
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--cov=app --cov-report=term-missing --cov-fail-under=70"
 
 [tool.coverage.run]
-omit = ["app/cli.py", "app/services/images/gemini.py", "app/services/embeddings/sentence.py"]
+omit = ["app/cli.py"]

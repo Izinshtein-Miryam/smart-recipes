@@ -1,52 +1,35 @@
-"""FastAPI dependencies: DB session, current user and role guards."""
+"""FastAPI dependencies: DB session, admin guard and the AI service."""
 
-from collections.abc import Callable
+from functools import lru_cache
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
-from app.core.security import decode_access_token
+from app.core.security import is_valid_admin_token
 from app.db import get_db
-from app.models import Role, User
+from app.services.ai_service import AiService
 
 DbSession = Annotated[Session, Depends(get_db)]
 
-
-def get_optional_user(request: Request, db: DbSession) -> User | None:
-    token = request.cookies.get(get_settings().cookie_name)
-    if not token:
-        return None
-    user_id = decode_access_token(token)
-    if user_id is None:
-        return None
-    user = db.get(User, user_id)
-    if user is None or not user.is_active:
-        return None
-    return user
+_bearer = HTTPBearer(auto_error=False)
 
 
-OptionalUser = Annotated[User | None, Depends(get_optional_user)]
+def require_admin(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
+) -> None:
+    if credentials is None or not is_valid_admin_token(credentials.credentials):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "unauthorized")
 
 
-def get_current_user(user: OptionalUser) -> User:
-    if user is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "נדרשת התחברות")
-    return user
+AdminOnly = Depends(require_admin)
 
 
-CurrentUser = Annotated[User, Depends(get_current_user)]
+@lru_cache
+def get_ai_service() -> AiService:
+    return AiService.from_settings(get_settings())
 
 
-def require_role(minimum: Role) -> Callable[[User], User]:
-    def guard(user: CurrentUser) -> User:
-        if not user.has_role(minimum):
-            raise HTTPException(status.HTTP_403_FORBIDDEN, "אין הרשאה")
-        return user
-
-    return guard
-
-
-ContentManager = Annotated[User, Depends(require_role(Role.CONTENT_MANAGER))]
-SysAdmin = Annotated[User, Depends(require_role(Role.SYSADMIN))]
+AiDep = Annotated[AiService, Depends(get_ai_service)]

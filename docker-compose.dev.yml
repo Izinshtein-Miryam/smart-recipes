@@ -1,0 +1,5 @@
+# Dev overlay: publishes PostgreSQL on localhost:5432 so the backend can run outside Docker.
+services:
+  postgres:
+    ports:
+      - "127.0.0.1:5432:5432"

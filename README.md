@@ -1,83 +1,72 @@
-# מתכונים חכם
+# סיר ומחבת – אתר מתכונים חכם
 
-אתר מתכונים בעברית (RTL) עם ניווט חכם, יצירה חכמה והמלצות, מבוסס Claude API.
-פרויקט לימוד והדגמה שרץ מקומית.
+אתר מתכונים דו-לשוני (עברית RTL / אנגלית LTR), פתוח לכולם ללא הרשמה, עם חיפוש לפי מצרכים, סינון, ערכים תזונתיים משוערים, התאמת מתכון ועוזר בישול – מבוסס OpenAI Responses API.
 
 - אפיון: [`docs/SPEC.md`](docs/SPEC.md)
-- אב-טיפוס מסכים: [`docs/recipe-screens.html`](docs/recipe-screens.html)
+- עיצוב: [`docs/design/index.html`](docs/design/index.html)
+- אפיון ותשתית קודמים (Claude API, משתמשים): [`docs/archive/`](docs/archive/)
 
 ## מבנה הריפו
 
 ```
-backend/            FastAPI + SQLAlchemy 2 + Alembic (Python 3.12)
+backend/              FastAPI + SQLAlchemy 2 + Alembic (Python 3.12)
   app/
-    api/routes/     נתיבי API (נתיבים שטרם מומשו נמצאים ב-placeholders.py ומחזירים 501)
-    core/           אבטחה (bcrypt, JWT ב-cookie) ו-dependencies של הרשאות
-    domain/         לוגיקה טהורה: בדיקת בשר/חלב, חישוב מנות
-    models/         טבלאות מסד הנתונים לפי האפיון
-    schemas/        סכמות Pydantic לבקשות ותגובות
-    services/       שכבות AI: ai (Claude), images (ImageProvider), embeddings
-    seed/           נתוני דמה ופקודת seed
-    cli.py          create-sysadmin, seed
-  alembic/          מיגרציות
-  tests/            pytest (כיסוי מינימלי 70%)
-frontend/           React + TypeScript + Vite + Tailwind v4 + TanStack Query + React Router
-  src/
-    api/            fetch wrapper, טיפוסים ו-hooks
-    components/     רכיבים משותפים (Layout, RecipeCard...)
-    pages/          מסכים (מסכים שטרם מומשו ב-placeholders.tsx)
-    routes/         הגדרת הנתיבים
-docs/               אפיון ואב-טיפוס
+    api/routes/       recipes (ציבורי), ai, admin
+    core/             סיסמת מנהל + JWT, dependencies
+    domain/           לוגיקה טהורה (שינוי כמויות לפי מנות)
+    models/           recipes, ai_usage_log
+    schemas/          סכמות Pydantic, כולל סכמות הפלט המובנה של ה-AI
+    services/         ai_service (הקוד היחיד שפונה ל-OpenAI), prompts, storage (תמונות)
+    cli.py            hash-admin-password, purge-rejected
+  alembic/            מיגרציות
+  tests/              pytest מול PostgreSQL (כיסוי מינימלי 70%)
+frontend/             React + TypeScript + Vite + Tailwind v4 + TanStack Query + react-i18next
+  src/i18n/           he.json, en.json, החלפת dir לפי שפה
+docker-compose.yml    postgres + backend + frontend (nginx)
 ```
 
-## דרישות מוקדמות
-
-- Python 3.12 ו-[uv](https://docs.astral.sh/uv/) (או pip)
-- Node.js 22
-
-## התקנה
-
-Backend:
+## הרצה עם Docker Compose
 
 ```bash
+cp .env.example .env   # למלא POSTGRES_PASSWORD, OPENAI_API_KEY, ADMIN_PASSWORD_HASH, JWT_SECRET
+docker compose run --rm backend python -m app.cli hash-admin-password   # מפיק ערך ל-ADMIN_PASSWORD_HASH
+docker compose up --build
+```
+
+האתר זמין ב-http://localhost:8080. המיגרציות רצות אוטומטית בעליית ה-backend. תמונות נשמרות ב-volume בשם `storage`.
+
+## פיתוח מקומי
+
+דרישות: Python 3.12 עם [uv](https://docs.astral.sh/uv/), Node.js 22, Docker (ל-PostgreSQL).
+
+```bash
+cp .env.example .env
 cd backend
 uv venv .venv --python 3.12
 uv pip install --python .venv/bin/python -e ".[dev]"
-cp .env.example .env
-.venv/bin/alembic upgrade head
-.venv/bin/python -m app.cli seed
-.venv/bin/python -m app.cli create-sysadmin --email admin@example.com
+cp .env.example .env   # הסיסמה ב-DATABASE_URL חייבת להיות זהה ל-POSTGRES_PASSWORD בקובץ בשורש
+cd ../frontend && npm install
 ```
-
-ב-Windows מחליפים את `.venv/bin/` ב-`.venv\Scripts\`.
-
-ספקי AI אמיתיים (אופציונלי): ממלאים מפתחות ב-`backend/.env`, משנים את `LLM_PROVIDER` / `IMAGE_PROVIDER` / `EMBEDDING_PROVIDER`, ומתקינים את התוספות הנדרשות:
 
 ```bash
-uv pip install --python .venv/bin/python -e ".[images,embeddings]"
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --wait postgres
+cd backend && .venv/bin/alembic upgrade head
 ```
-
-כברירת מחדל כל הספקים במצב `mock`, כך שאפשר לפתח ולהריץ בדיקות בלי מפתחות.
-
-Frontend:
-
-```bash
-cd frontend
-npm install
-```
-
-## הרצה
 
 ```bash
 ./dev.sh
 ```
 
-ב-Windows: `./dev.ps1`. הסקריפט מריץ את השרת על פורט 8000 ואת הממשק על פורט 5173 (Vite מעביר את `/api` ו-`/media` לשרת).
+ב-Windows: `./dev.ps1`. הסקריפט מפעיל את PostgreSQL, את השרת (פורט 8000) ואת הממשק (פורט 5173; Vite מעביר את `/api` ו-`/media` לשרת).
 
 - אתר: http://localhost:5173
 - תיעוד API: http://localhost:8000/docs
 
+בלי `OPENAI_API_KEY` כל נקודות ה-AI מחזירות 503 `ai_unavailable` (והאישור של מתכון ממשיך לעבוד, עם `nutrition = null`).
+
 ## בדיקות ואיכות קוד
+
+בדיקות ה-backend רצות מול PostgreSQL (`TEST_DATABASE_URL`, ברירת מחדל: מסד `recipes_test` ב-localhost). הבדיקות מאפסות את הסכמה במסד הזה, לכן אין להפנות אותו למסד עם נתונים.
 
 ```bash
 cd backend && .venv/bin/pytest && .venv/bin/ruff check . && .venv/bin/mypy app tests
@@ -93,11 +82,9 @@ Pre-commit (מהשורש, אחרי התקנת ה-backend):
 backend/.venv/bin/pre-commit install
 ```
 
-GitHub Actions מריץ lint, בדיקות טיפוסים, מיגרציות ובדיקות בכל push (`.github/workflows/ci.yml`).
+GitHub Actions מריץ lint, בדיקות טיפוסים, מיגרציות (`alembic upgrade head` + `alembic check`) ובדיקות מול PostgreSQL בכל push.
 
 ## מיגרציות
-
-אחרי שינוי במודלים:
 
 ```bash
 cd backend
@@ -105,8 +92,20 @@ cd backend
 .venv/bin/alembic upgrade head
 ```
 
+## תחזוקה
+
+מחיקת תמונות של מתכונים שנדחו לפני יותר מ-7 ימים (מתאים ל-cron יומי):
+
+```bash
+docker compose run --rm backend python -m app.cli purge-rejected
+```
+
 ## מצב נוכחי
 
-מומש: מודל הנתונים המלא, הרשמה/התחברות/הרשאות לפי תפקיד, קטלוג (רשימה עם מסננים ועימוד, מתכון עם חישוב מנות), שכבות ה-AI עם מימושי mock, שלד הממשק עם כל הנתיבים מאב-הטיפוס.
+**מומש:** מודל הנתונים והמיגרציה, `ai_service` (חיפוש לפי מצרכים, הערכה תזונתית, התאמה – עם ניסיון חוזר אחד ותיעוד טוקנים), נתיבי הקטלוג, הגשת מתכון (אימות תמונה, הגבלת 5 ביום לכל IP), התחברות מנהל ותור אישורים, שלד לקוח עם i18n ורשימת מתכונים ודף מתכון, Docker Compose ו-CI.
 
-הבא בתור: שאר נתיבי ה-API (ראו `backend/app/api/routes/placeholders.py`), מסכי הממשק (`frontend/src/pages/placeholders.tsx`), והרחבת קובץ ה-seed ל-~50 מתכונים.
+**הבא בתור:**
+
+- צ'אט עם SSE ולולאת Tools (`POST /api/ai/chat` מחזיר 501; הגדרות הכלים ב-`CHAT_TOOLS`)
+- מסכי הלקוח שטרם נבנו (`frontend/src/pages/placeholders.tsx`): חיפוש מקרר, הגשת מתכון, תצוגת מתכון מותאם, ניהול
+- פאנל סינון ברשימת המתכונים

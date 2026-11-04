@@ -1,19 +1,30 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { api } from './client';
-import type { Page, RecipeCard, RecipeDetail } from './types';
+import type { Recipe, RecipeFilters, RecipeSummary } from './types';
 
-export function useRecipes(params: Record<string, string> = {}) {
-  const qs = new URLSearchParams(params).toString();
+function toQuery(filters: RecipeFilters): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters)) {
+    if (value === undefined || value === '') continue;
+    if (Array.isArray(value)) value.forEach((v) => params.append(key, v));
+    else params.set(key, String(value));
+  }
+  const qs = params.toString();
+  return qs ? `?${qs}` : '';
+}
+
+export function useRecipes(filters: RecipeFilters = {}) {
   return useQuery({
-    queryKey: ['recipes', params],
-    queryFn: () => api<Page<RecipeCard>>(`/recipes${qs ? `?${qs}` : ''}`),
+    queryKey: ['recipes', filters],
+    queryFn: () => api<RecipeSummary[]>(`/recipes${toQuery(filters)}`),
   });
 }
 
-export function useRecipe(slug: string, servings?: number) {
+export function useRecipe(id: string | undefined) {
   return useQuery({
-    queryKey: ['recipe', slug, servings],
-    queryFn: () => api<RecipeDetail>(`/recipes/${slug}${servings ? `?servings=${servings}` : ''}`),
+    queryKey: ['recipe', id],
+    queryFn: () => api<Recipe>(`/recipes/${id}`),
+    enabled: Boolean(id),
   });
 }

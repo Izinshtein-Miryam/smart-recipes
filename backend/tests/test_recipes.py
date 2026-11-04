@@ -1,57 +1,103 @@
+import json
+from typing import Any
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from app.config import get_settings
 from app.models import Recipe, RecipeStatus
-from app.seed import seed
+
+from .conftest import make_recipe
+
+PNG = b"\x89PNG\r\n\x1a\n" + b"0" * 32
 
 
-def test_list_recipes(client: TestClient) -> None:
-    res = client.get("/api/recipes")
+def form(**overrides: object) -> dict[str, object]:
+    data: dict[str, object] = {
+        "lang": "en",
+        "title": "foo",
+        "description": "Lorem ipsum",
+        "servings": 2,
+        "prep_minutes": 10,
+        "difficulty": "easy",
+        "kashrut": "parve",
+        "equipment": ["oven", "stovetop"],
+        "ingredients": json.dumps([{"name": "bar", "quantity": 1, "unit": None, "note": None}]),
+        "steps": json.dumps(["baz"]),
+    }
+    return {**data, **overrides}
+
+
+def test_list_returns_only_approved(client: TestClient, db: Session) -> None:
+    make_recipe(db, title="approved")
+    make_recipe(db, title="pending", status=RecipeStatus.PENDING)
+    titles = [r["title"] for r in client.get("/api/recipes").json()]
+    assert titles == ["approved"]
+
+
+def test_list_filters(client: TestClient, db: Session) -> None:
+    make_recipe(db, title="a", kashrut="meat", prep_minutes=20, equipment=["oven", "stovetop"])
+    make_recipe(db, title="b", kashrut="dairy", prep_minutes=90, equipment=["no_cook"], lang="en")
+
+    def titles(**params: Any) -> list[str]:
+        return [r["title"] for r in client.get("/api/recipes", params=params).json()]
+
+    assert titles(kashrut="meat") == ["a"]
+    assert titles(max_minutes=30) == ["a"]
+    assert titles(lang="en") == ["b"]
+    assert titles(equipment=["oven", "stovetop"]) == ["a"]
+    assert titles(equipment="no_cook") == ["b"]
+    assert titles(q="b") == ["b"]
+    assert titles(difficulty="hard") == []
+
+
+def test_get_recipe(client: TestClient, db: Session) -> None:
+    ok = make_recipe(db)
+    hidden = make_recipe(db, status=RecipeStatus.PENDING)
+    res = client.get(f"/api/recipes/{ok.id}")
     assert res.status_code == 200
+    assert res.json()["ingredients"][0]["name"] == "bar"
+    assert client.get(f"/api/recipes/{hidden.id}").status_code == 404
+
+
+def test_submit_creates_pending_recipe(client: TestClient, db: Session) -> None:
+    res = client.post("/api/recipes", data=form(), files={"image": ("x.png", PNG, "image/png")})
+    assert res.status_code == 201
     body = res.json()
-    assert body["total"] == 3
-    assert {r["slug"] for r in body["items"]} >= {"shakshuka-yeruka", "salat-kinoa"}
+    assert body["status"] == "pending"
+    assert body["image_url"] is None  # pending images are not public
+    recipe = db.get(Recipe, body["id"])
+    assert recipe is not None
+    assert recipe.image_path is not None
+    assert recipe.image_path.startswith("pending/")
+    assert recipe.submitter_ip_hash
+    assert client.get(f"/api/recipes/{body['id']}").status_code == 404
 
 
-def test_list_filters(client: TestClient) -> None:
-    assert client.get("/api/recipes", params={"kosher_type": "dairy"}).json()["total"] == 1
-    assert client.get("/api/recipes", params={"kosher_type": "meat"}).json()["total"] == 1
-    assert client.get("/api/recipes", params={"dish_type": "main"}).json()["total"] == 2
-    assert client.get("/api/recipes", params={"max_minutes": 25}).json()["total"] == 1
-    assert client.get("/api/recipes", params={"difficulty": "medium"}).json()["total"] == 1
-    assert client.get("/api/recipes", params={"q": "קינואה"}).json()["total"] == 1
+def test_submit_rejects_bad_image_and_bad_data(client: TestClient) -> None:
+    bad_image = client.post(
+        "/api/recipes", data=form(), files={"image": ("x.png", b"nope", "image/png")}
+    )
+    assert bad_image.status_code == 422
+    assert client.post("/api/recipes", data=form(ingredients="not json")).status_code == 422
+    assert client.post("/api/recipes", data=form(servings=0)).status_code == 422
 
 
-def test_pagination(client: TestClient) -> None:
-    body = client.get("/api/recipes", params={"page_size": 2, "page": 2}).json()
-    assert len(body["items"]) == 1
-    assert body["page"] == 2
+def test_submit_rejects_oversize_image(client: TestClient, monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    monkeypatch.setattr(get_settings(), "max_image_bytes", 16)
+    res = client.post("/api/recipes", data=form(), files={"image": ("x.png", PNG, "image/png")})
+    assert res.status_code == 422
 
 
-def test_hidden_recipes_not_listed(client: TestClient, seeded_db: Session) -> None:
-    recipe = seeded_db.query(Recipe).filter_by(slug="salat-kinoa").one()
-    recipe.status = RecipeStatus.HIDDEN
-    seeded_db.commit()
-    assert client.get("/api/recipes").json()["total"] == 2
-    assert client.get("/api/recipes/salat-kinoa").status_code == 404
+def test_submit_rate_limited_per_ip(client: TestClient, monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    monkeypatch.setattr(get_settings(), "max_submissions_per_day", 2)
+    assert client.post("/api/recipes", data=form()).status_code == 201
+    assert client.post("/api/recipes", data=form()).status_code == 201
+    assert client.post("/api/recipes", data=form()).status_code == 429
 
 
-def test_get_recipe_scaled(client: TestClient) -> None:
-    base = client.get("/api/recipes/shakshuka-yeruka").json()
-    assert base["servings"] == 2
-    assert base["kosher_type"] == "dairy"
-    assert base["steps"][0]["order"] == 1
-    eggs = next(i for i in base["ingredients"] if i["name"] == "ביצים")
-    assert eggs["quantity"] == 4
-
-    scaled = client.get("/api/recipes/shakshuka-yeruka", params={"servings": 4}).json()
-    eggs = next(i for i in scaled["ingredients"] if i["name"] == "ביצים")
-    assert eggs["quantity"] == 8
-
-
-def test_get_missing_recipe(client: TestClient) -> None:
-    assert client.get("/api/recipes/lorem-ipsum").status_code == 404
-
-
-def test_seed_is_idempotent(seeded_db: Session) -> None:
-    assert seed(seeded_db) == 0
+def test_submit_with_unknown_source_recipe(client: TestClient) -> None:
+    res = client.post(
+        "/api/recipes", data=form(source_recipe_id="00000000-0000-0000-0000-000000000000")
+    )
+    assert res.status_code == 422

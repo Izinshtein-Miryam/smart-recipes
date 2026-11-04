@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>סיר ומחבת — מתכונים חכמים לבית</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&family=Frank+Ruhl+Libre:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-main: #FDFBF7;
+  --surface: #FFFFFF;
+  --text-main: #2C221E;
+  --text-muted: #786C66;
+  --line-color: #EFE8DE;
+  
+  --primary: #C85A32;
+  --primary-hover: #A84522;
+  --accent-gold: #D99B26;
+  --accent-green: #4A6B53;
+  
+  --badge-meat-bg: #FBECE8;
+  --badge-meat-text: #9E3518;
+  --badge-dairy-bg: #EAF4F1;
+  --badge-dairy-text: #1D5C4D;
+  --badge-parve-bg: #FAF3E1;
+  --badge-parve-text: #825E12;
+  
+  --shadow-sm: 0 4px 12px rgba(44, 34, 30, 0.04);
+  --shadow-md: 0 12px 32px rgba(44, 34, 30, 0.08);
+  --radius-lg: 24px;
+  --radius-md: 16px;
+  --radius-full: 999px;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-family: 'Assistant', system-ui, sans-serif;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+h1, h2, h3, .serif-heading {
+  font-family: 'Frank Ruhl Libre', serif;
+  margin: 0;
+  font-weight: 700;
+}
+
+a { color: inherit; text-decoration: none; transition: opacity 0.2s; }
+a:hover { opacity: 0.85; }
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  width: 100%;
+}
+
+/* Header */
+header.site-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--line-color);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 80px;
+}
+.logo {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--primary-hover);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.logo-icon {
+  width: 40px;
+  height: 40px;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+nav.main-nav {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  font-weight: 600;
+  font-size: 16px;
+}
+nav.main-nav a.active {
+  color: var(--primary);
+  position: relative;
+}
+nav.main-nav a.active::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  right: 0;
+  left: 0;
+  height: 2px;
+  background: var(--primary);
+  border-radius: 2px;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 28px;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  font-size: 15px;
+  border: none;
+  background: var(--primary);
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+.btn:hover { background: var(--primary-hover); transform: translateY(-1px); }
+.btn.btn-outline { background: transparent; border: 1.5px solid var(--line-color); color: var(--text-main); }
+.btn.btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+
+/* Hero Section */
+.hero {
+  padding: 64px 0 40px;
+}
+.hero-box {
+  background: linear-gradient(135deg, #FFF9F2 0%, #F5EAE0 100%);
+  border-radius: var(--radius-lg);
+  padding: 48px;
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  border: 1px solid var(--line-color);
+}
+.hero-content { flex: 1; }
+.hero-tag {
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: block;
+}
+.hero-content h1 {
+  font-size: 48px;
+  line-height: 1.15;
+  margin-bottom: 16px;
+  color: var(--text-main);
+}
+.hero-content p {
+  font-size: 18px;
+  color: var(--text-muted);
+  margin-bottom: 28px;
+  max-width: 480px;
+}
+
+.search-box {
+  display: flex;
+  background: var(--surface);
+  padding: 6px 6px 6px 16px;
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--line-color);
+  max-width: 520px;
+}
+.search-box input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font: inherit;
+  font-size: 16px;
+  padding-right: 12px;
+  background: transparent;
+}
+
+/* Category Grid */
+.section { padding: 40px 0; }
+.section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 24px;
+}
+.section-title h2 { font-size: 32px; }
+.section-title p { color: var(--text-muted); margin-top: 4px; font-size: 15px; }
+
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+.category-card {
+  background: var(--surface);
+  border: 1px solid var(--line-color);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  text-align: center;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+.category-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+.category-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 24px;
+}
+
+/* Chips Filter */
+.chips-group {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 24px;
+}
+.chip-btn {
+  padding: 8px 20px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--line-color);
+  background: var(--surface);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+.chip-btn.active, .chip-btn:hover {
+  background: var(--text-main);
+  color: #fff;
+  border-color: var(--text-main);
+}
+
+/* Recipe Cards Grid */
+.recipes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 28px;
+}
+.recipe-card {
+  background: var(--surface);
+  border: 1px solid var(--line-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+}
+.recipe-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+
+.recipe-image {
+  height: 180px;
+  background-color: #F0E6D8;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+.badge-kosher {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+}
+.badge-kosher.parve { background: var(--badge-parve-bg); color: var(--badge-parve-text); }
+.badge-kosher.dairy { background: var(--badge-dairy-bg); color: var(--badge-dairy-text); }
+.badge-kosher.meat { background: var(--badge-meat-bg); color: var(--badge-meat-text); }
+
+.recipe-content {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.recipe-content h3 { font-size: 20px; margin-bottom: 8px; }
+.recipe-content p { color: var(--text-muted); font-size: 14px; margin: 0 0 16px; flex: 1; }
+
+.recipe-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--line-color);
+  padding-top: 12px;
+}
+
+/* Fridge Banner */
+.fridge-banner {
+  background: var(--accent-green);
+  color: #fff;
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 40px 0;
+}
+.fridge-banner h2 { font-size: 30px; color: #fff; margin-bottom: 8px; }
+.fridge-banner p { color: #E0EFE5; margin: 0; max-width: 440px; }
+
+/* Footer */
+footer {
+  background: var(--surface);
+  border-top: 1px solid var(--line-color);
+  margin-top: auto;
+  padding: 40px 0 20px;
+}
+.footer-inner {
+  display: flex;
+  justify-content: space-between;
+  gap: 32px;
+  flex-wrap: wrap;
+  padding-bottom: 32px;
+}
+.footer-brand p { color: var(--text-muted); max-width: 300px; margin-top: 8px; }
+
+@media (max-width: 768px) {
+  .hero-box { flex-direction: column; text-align: center; padding: 32px 20px; }
+  .hero-content h1 { font-size: 36px; }
+  .search-box { width: 100%; }
+  .fridge-banner { flex-direction: column; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a href="#" class="logo">
+      <span class="logo-icon">🍳</span>
+      סיר ומחבת
+    </a>
+    <nav class="main-nav">
+      <a href="#" class="active">מתכונים</a>
+      <a href="#">מה יש במקרר?</a>
+      <a href="#">הוספת מתכון</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <section class="hero">
+      <div class="hero-box">
+        <div class="hero-content">
+          <span class="hero-tag">המלצת השבוע</span>
+          <h1>בישול ביתי, פשוט וטעים.</h1>
+          <p>גלו מאות מתכונים נפלאים, חפשו לפי רכיבים זמינים בבית וצרו ארוחות משפחתיות בקלות.</p>
+          <div class="search-box">
+            <input type="search" placeholder="איזה מתכון בא לכם להכין היום?">
+            <button class="btn">חיפוש</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-title">
+        <div>
+          <h2>קטגוריות מובילות</h2>
+          <p>בחירה מהירה לפי סגנון הארוחה</p>
+        </div>
+      </div>
+      <div class="categories-grid">
+        <div class="category-card">
+          <div class="category-icon" style="background: var(--primary);">🍲</div>
+          <h3>מנות עיקריות</h3>
+          <p>סירים עשירים וארוחות מלאות</p>
+        </div>
+        <div class="category-card">
+          <div class="category-icon" style="background: var(--accent-green);">🥗</div>
+          <h3>סלטים ותוספות</h3>
+          <p>טריים, צבעוניים ובריאים</p>
+        </div>
+        <div class="category-card">
+          <div class="category-icon" style="background: var(--accent-gold);">🍰</div>
+          <h3>מאפים וקינוחים</h3>
+          <p>מתוקים לסיום הארוחה</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-title">
+        <div>
+          <h2>מתכונים נבחרים</h2>
+          <p>הכי פופולריים במטבח השבוע</p>
+        </div>
+        <a href="#" class="btn btn-outline">לכל המתכונים ←</a>
+      </div>
+
+      <div class="chips-group">
+        <button class="chip-btn active">הכל</button>
+        <button class="chip-btn">מהיר (עד 30 דק')</button>
+        <button class="chip-btn">בשרי</button>
+        <button class="chip-btn">חלבי</button>
+        <button class="chip-btn">פרווה</button>
+      </div>
+
+      <div class="recipes-grid">
+        <article class="recipe-card">
+          <div class="recipe-image">
+            <span class="badge-kosher meat">בשרי</span>
+            🖼️ תמונת מתכון
+          </div>
+          <div class="recipe-content">
+            <h3>צלי בקר עסיסי עם ירקות שורש</h3>
+            <p>מנה קלאסית לעשייה איטית, בשר רך ונמס בפה ברוטב עשיר.</p>
+            <div class="recipe-meta">
+              <span>⏱️ 90 דק'</span>
+              <span>•</span>
+              <span>👨‍🍳 בינוני</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="recipe-card">
+          <div class="recipe-image">
+            <span class="badge-kosher dairy">חלבי</span>
+            🖼️ תמונת מתכון
+          </div>
+          <div class="recipe-content">
+            <h3>מאפה פסטה וגבינות זהוב</h3>
+            <p>פסטה אפויה בתנור עם תערובת גבינות איכותיות וציפוי פריך.</p>
+            <div class="recipe-meta">
+              <span>⏱️ 35 דק'</span>
+              <span>•</span>
+              <span>👨‍🍳 קל</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="recipe-card">
+          <div class="recipe-image">
+            <span class="badge-kosher parve">פרווה</span>
+            🖼️ תמונת מתכון
+          </div>
+          <div class="recipe-content">
+            <h3>מרק עדשים וירקות מחמם</h3>
+            <p>מרק עשיר, משביע ומלא בערכים תזונתיים ליום קריר.</p>
+            <div class="recipe-meta">
+              <span>⏱️ 40 דק'</span>
+              <span>•</span>
+              <span>👨‍🍳 קל</span>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <div class="fridge-banner">
+      <div>
+        <h2>מה מכינים ממה שיש?</h2>
+        <p>מכניסים את הרכיבים שיש לכם במקרר ומקבלים הצעות למתכונים מתאימים במיוחד.</p>
+      </div>
+      <a href="#" class="btn" style="background:#fff; color:var(--accent-green);">לחיפוש לפי מצרכים</a>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="container footer-inner">
+    <div class="footer-brand">
+      <div class="logo">🍳 סיר ומחבת</div>
+      <p>אתר המתכונים הביתי שלך למנות טעימות, פשוטות ומוצלחות בכל פעם.</p>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

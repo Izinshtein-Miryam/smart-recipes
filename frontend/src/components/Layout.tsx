@@ -1,53 +1,53 @@
+import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet } from 'react-router';
 
+import { LanguageSwitch } from './LanguageSwitch';
+
 const links = [
-  { to: '/', label: 'בית' },
-  { to: '/search', label: 'חיפוש' },
-  { to: '/generate', label: 'יצירה חכמה' },
-  { to: '/favorites', label: 'מועדפים' },
-  { to: '/shopping', label: 'רשימת קניות' },
+  { to: '/', key: 'nav.recipes' },
+  { to: '/fridge', key: 'nav.fridge' },
+  { to: '/submit', key: 'nav.submit' },
 ];
 
 export function Layout() {
+  const { t } = useTranslation();
   return (
-    <div className="min-h-screen">
-      <header className="bg-surface border-line no-print border-b">
+    <div className="flex min-h-screen flex-col">
+      <header className="bg-surface border-line sticky top-0 z-10 border-b">
         <nav
-          aria-label="ניווט ראשי"
-          className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-4 py-3"
+          aria-label={t('nav.label')}
+          className="mx-auto flex h-20 max-w-6xl items-center gap-8 px-6"
         >
-          <NavLink to="/" className="text-brand text-xl font-bold">
-            מתכונים חכם
+          <NavLink to="/" className="text-brand-hover font-serif text-2xl font-extrabold">
+            🍳 {t('app.name')}
           </NavLink>
-          <ul className="flex flex-wrap gap-3">
+          <ul className="flex flex-1 items-center gap-6 font-semibold">
             {links.map((l) => (
               <li key={l.to}>
                 <NavLink
                   to={l.to}
                   end
-                  className={({ isActive }) => (isActive ? 'text-brand font-medium' : 'text-ink')}
+                  className={({ isActive }) => (isActive ? 'text-brand' : 'hover:text-brand')}
                 >
-                  {l.label}
+                  {t(l.key)}
                 </NavLink>
               </li>
             ))}
           </ul>
-          <NavLink to="/login" className="ms-auto">
-            התחברות
-          </NavLink>
+          <LanguageSwitch />
         </nav>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-6">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10">
         <Outlet />
       </main>
-      {/* Assistant chat - opens a side panel (feature 1.3). */}
-      <button
-        type="button"
-        aria-label="פתיחת צ'אט עוזר"
-        className="bg-brand text-brand-ink shadow-card no-print fixed bottom-5 left-5 rounded-full px-5 py-3"
-      >
-        עוזר
-      </button>
+      <footer className="border-line bg-surface border-t py-6">
+        <div className="mx-auto flex max-w-6xl justify-between px-6 text-sm">
+          <span className="text-muted">{t('app.name')}</span>
+          <NavLink to="/admin/login" className="text-muted hover:text-brand">
+            {t('nav.admin')}
+          </NavLink>
+        </div>
+      </footer>
     </div>
   );
 }

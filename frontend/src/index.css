@@ -1,41 +1,40 @@
 @import 'tailwindcss';
 
-/* Design tokens from docs/recipe-screens.html */
+/* Design tokens from docs/design/index.html */
 @theme {
-  --font-sans: 'Heebo', 'Assistant', 'Segoe UI', Arial, sans-serif;
-  --color-bg: #faf7f2;
+  --font-sans: 'Assistant', system-ui, 'Segoe UI', Arial, sans-serif;
+  --font-serif: 'Frank Ruhl Libre', serif;
+  --color-bg: #fdfbf7;
   --color-surface: #ffffff;
-  --color-ink: #2b2622;
-  --color-muted: #7a6f66;
-  --color-line: #e8e1d8;
-  --color-brand: #c2562b;
+  --color-ink: #2c221e;
+  --color-muted: #786c66;
+  --color-line: #efe8de;
+  --color-brand: #c85a32;
+  --color-brand-hover: #a84522;
   --color-brand-ink: #ffffff;
-  --color-brand-soft: #f6e6da;
-  --color-meat: #b23a3a;
-  --color-meat-soft: #f7e1e1;
-  --color-dairy: #2f6db5;
-  --color-dairy-soft: #e2ecf8;
-  --color-parve: #3c8a4f;
-  --color-parve-soft: #e2f2e6;
-  --color-ai: #6d47b8;
-  --color-ai-soft: #eee7fa;
-  --color-ok: #2f8a4f;
-  --color-warn: #b7791f;
-  --color-warn-soft: #fbf1dc;
-  --radius-card: 14px;
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05), 0 4px 14px rgba(0, 0, 0, 0.06);
+  --color-gold: #d99b26;
+  --color-green: #4a6b53;
+  --color-meat: #9e3518;
+  --color-meat-soft: #fbece8;
+  --color-dairy: #1d5c4d;
+  --color-dairy-soft: #eaf4f1;
+  --color-parve: #825e12;
+  --color-parve-soft: #faf3e1;
+  --radius-card: 16px;
+  --shadow-card: 0 4px 12px rgba(44, 34, 30, 0.04);
+  --shadow-lift: 0 12px 32px rgba(44, 34, 30, 0.08);
 }
 
 body {
   @apply bg-bg text-ink font-sans;
 }
 
-:focus-visible {
-  @apply outline-brand outline-2 outline-offset-2;
+h1,
+h2,
+h3 {
+  @apply font-serif;
 }
 
-@media print {
-  .no-print {
-    display: none !important;
-  }
+:focus-visible {
+  @apply outline-brand outline-2 outline-offset-2;
 }
