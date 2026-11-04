@@ -2,6 +2,7 @@ import { useParams } from 'react-router';
 
 import { useRecipe } from '@/api/recipes';
 import { KosherBadge } from '@/components/KosherBadge';
+import { RecipeShareActions } from '@/components/RecipeShareActions';
 
 export function RecipePage() {
   const { slug = '' } = useParams();
@@ -15,6 +16,7 @@ export function RecipePage() {
       <KosherBadge type={recipe.kosher_type} />
       <h1 className="text-3xl font-bold">{recipe.title}</h1>
       <p className="text-muted">{recipe.description}</p>
+      <RecipeShareActions title={recipe.title} description={recipe.description} />
       <h2 className="text-xl font-bold">רכיבים</h2>
       <ul className="list-disc ps-6">
         {recipe.ingredients.map((i) => (

@@ -34,8 +34,37 @@ body {
   @apply outline-brand outline-2 outline-offset-2;
 }
 
+/* Print view: content only - no navigation, buttons or decorations. */
 @media print {
+  @page {
+    margin: 1.5cm;
+  }
+
   .no-print {
     display: none !important;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  main {
+    max-width: none;
+    padding: 0;
+  }
+
+  * {
+    box-shadow: none !important;
+  }
+
+  h1,
+  h2 {
+    break-after: avoid;
+  }
+
+  li,
+  img {
+    break-inside: avoid;
   }
 }
