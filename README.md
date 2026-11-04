@@ -122,4 +122,4 @@ gh auth refresh -s project
 
 מומש: מודל הנתונים המלא, הרשמה/התחברות/הרשאות לפי תפקיד, קטלוג (רשימה עם מסננים ועימוד, מתכון עם חישוב מנות), שכבות ה-AI עם מימושי mock, שלד הממשק עם כל הנתיבים מאב-הטיפוס.
 
-הבא בתור: שאר נתיבי ה-API (ראו `backend/app/api/routes/placeholders.py`), מסכי הממשק (`frontend/src/pages/placeholders.tsx`), והרחבת קובץ ה-seed ל-~50 מתכונים.
+הבא בתור: שאר נתיבי ה-API (ראו `backend/app/api/routes/placeholders.py`), מסכי הממשק (`frontend/src/pages/placeholders.tsx`).

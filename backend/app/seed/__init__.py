@@ -1,4 +1,4 @@
-"""Demo data loader. Extend seed_data.json towards the ~50 demo recipes in the spec."""
+"""Demo data loader: ingredients table and 50 demo recipes from seed_data.json."""
 
 import json
 from importlib import resources
@@ -47,9 +47,15 @@ def seed(db: Session) -> int:
             RecipeIngredient(ingredient_id=by_name[n].id, quantity=q, unit=u, order=i)
             for i, (n, q, u) in enumerate(lines)
         ]
+        # A step is [text, timer_seconds] or [text, timer_seconds, [ingredient names]].
         recipe.steps = [
-            RecipeStep(order=i + 1, text=t, timer_seconds=s, ingredient_ids=[])
-            for i, (t, s) in enumerate(steps)
+            RecipeStep(
+                order=i + 1,
+                text=step[0],
+                timer_seconds=step[1],
+                ingredient_ids=[by_name[n].id for n in (step[2] if len(step) > 2 else [])],
+            )
+            for i, step in enumerate(steps)
         ]
         db.add(recipe)
         created += 1
