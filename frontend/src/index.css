@@ -1,0 +1,41 @@
+@import 'tailwindcss';
+
+/* Design tokens from docs/recipe-screens.html */
+@theme {
+  --font-sans: 'Heebo', 'Assistant', 'Segoe UI', Arial, sans-serif;
+  --color-bg: #faf7f2;
+  --color-surface: #ffffff;
+  --color-ink: #2b2622;
+  --color-muted: #7a6f66;
+  --color-line: #e8e1d8;
+  --color-brand: #c2562b;
+  --color-brand-ink: #ffffff;
+  --color-brand-soft: #f6e6da;
+  --color-meat: #b23a3a;
+  --color-meat-soft: #f7e1e1;
+  --color-dairy: #2f6db5;
+  --color-dairy-soft: #e2ecf8;
+  --color-parve: #3c8a4f;
+  --color-parve-soft: #e2f2e6;
+  --color-ai: #6d47b8;
+  --color-ai-soft: #eee7fa;
+  --color-ok: #2f8a4f;
+  --color-warn: #b7791f;
+  --color-warn-soft: #fbf1dc;
+  --radius-card: 14px;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05), 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+
+body {
+  @apply bg-bg text-ink font-sans;
+}
+
+:focus-visible {
+  @apply outline-brand outline-2 outline-offset-2;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
