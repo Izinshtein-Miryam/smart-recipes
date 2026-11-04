@@ -3,11 +3,15 @@ import { Link } from 'react-router';
 import type { RecipeCard as RecipeCardData } from '@/api/types';
 import { difficultyLabels, dishLabels } from '@/lib/labels';
 
+import { DishIcon } from './DishIcon';
 import { KosherBadge } from './KosherBadge';
 
 export function RecipeCard({ recipe }: { recipe: RecipeCardData }) {
   return (
     <article className="bg-surface border-line shadow-card rounded-card flex flex-col gap-2 border p-4">
+      <div className="bg-brand-soft text-brand flex aspect-[4/3] items-center justify-center rounded-lg">
+        <DishIcon type={recipe.dish_type} className="h-12 w-12" />
+      </div>
       <div className="flex items-center gap-2">
         <KosherBadge type={recipe.kosher_type} />
         {recipe.source === 'ai' && (
