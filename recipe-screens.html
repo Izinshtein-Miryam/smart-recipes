@@ -1,0 +1,863 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>מתכונים חכם – אב-טיפוס מסכים</title>
+<style>
+:root{
+  --bg:#faf7f2;--surface:#ffffff;--ink:#2b2622;--muted:#7a6f66;--line:#e8e1d8;
+  --brand:#c2562b;--brand-ink:#ffffff;--brand-soft:#f6e6da;
+  --meat:#b23a3a;--meat-soft:#f7e1e1;--dairy:#2f6db5;--dairy-soft:#e2ecf8;--parve:#3c8a4f;--parve-soft:#e2f2e6;
+  --ai:#6d47b8;--ai-soft:#eee7fa;--ok:#2f8a4f;--warn:#b7791f;--warn-soft:#fbf1dc;
+  --radius:14px;--shadow:0 1px 2px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:"Heebo","Assistant","Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;font-size:16px}
+a{color:inherit;text-decoration:none}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{line-height:1.25;margin:0 0 .5em}
+h1{font-size:1.9rem}h2{font-size:1.4rem}h3{font-size:1.1rem}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+.muted{color:var(--muted)}
+.small{font-size:.875rem}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:900px){.g3,.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:620px){.g2,.g3,.g4{grid-template-columns:1fr}h1{font-size:1.5rem}}
+
+/* header */
+header.top{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+header.top .wrap{display:flex;align-items:center;gap:16px;height:64px}
+.logo{font-weight:800;font-size:1.2rem;color:var(--brand);display:flex;align-items:center;gap:8px;white-space:nowrap}
+nav.main{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+nav.main a{padding:6px 12px;border-radius:999px;white-space:nowrap;font-size:.95rem;color:var(--muted)}
+nav.main a:hover{background:var(--brand-soft);color:var(--ink)}
+nav.main a.active{background:var(--brand);color:var(--brand-ink)}
+.role{font-size:.85rem;border:1px solid var(--line);border-radius:8px;padding:4px 6px;background:var(--surface)}
+.btn.menu-btn{display:none}
+@media (max-width:900px){
+  nav.main{position:absolute;top:64px;right:0;left:0;background:var(--surface);flex-direction:column;padding:8px 16px;border-bottom:1px solid var(--line);display:none}
+  nav.main.open{display:flex}
+  .btn.menu-btn{display:inline-flex}
+}
+
+/* controls */
+.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);padding:9px 16px;border-radius:10px;cursor:pointer;transition:.15s;white-space:nowrap}
+.btn:hover{border-color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.ai{background:var(--ai);border-color:var(--ai);color:#fff}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.sm{padding:5px 10px;font-size:.875rem;border-radius:8px}
+.btn.danger{color:var(--meat)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.input,select.input,textarea.input{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 12px}
+.input:focus{outline:2px solid var(--brand-soft);border-color:var(--brand)}
+label.f{display:block;font-size:.875rem;color:var(--muted);margin-bottom:4px}
+.field{margin-bottom:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.pad{padding:20px}
+.section{margin:28px 0}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:.8rem;border:1px solid var(--line);background:var(--surface)}
+.chip.x button{border:0;background:none;cursor:pointer;padding:0;color:var(--muted);font-size:1rem;line-height:1}
+.chip.ai{background:var(--ai-soft);border-color:#d9cbf3;color:var(--ai)}
+.badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.78rem;font-weight:600}
+.k-meat{background:var(--meat-soft);color:var(--meat)}
+.k-dairy{background:var(--dairy-soft);color:var(--dairy)}
+.k-parve{background:var(--parve-soft);color:var(--parve)}
+.b-ai{background:var(--ai-soft);color:var(--ai)}
+.b-draft{background:var(--warn-soft);color:var(--warn)}
+.b-pub{background:var(--parve-soft);color:var(--parve)}
+.b-hidden{background:#eee;color:#666}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:18px;overflow-x:auto}
+.tabs a,.tabs button{padding:10px 16px;border:0;background:none;cursor:pointer;border-bottom:3px solid transparent;color:var(--muted);white-space:nowrap}
+.tabs .on{border-bottom-color:var(--brand);color:var(--ink);font-weight:600}
+table.t{width:100%;border-collapse:collapse;font-size:.92rem}
+table.t th,table.t td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:right;vertical-align:middle}
+table.t th{color:var(--muted);font-weight:600;background:#fcfaf7}
+.table-wrap{overflow-x:auto}
+.note{background:var(--warn-soft);border:1px solid #f0dcb1;border-radius:10px;padding:10px 14px;font-size:.9rem}
+.note.ai{background:var(--ai-soft);border-color:#d9cbf3}
+.empty{text-align:center;padding:40px 16px;color:var(--muted)}
+
+/* recipe art */
+.art{position:relative;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;aspect-ratio:4/3}
+.art svg{width:46%;height:auto;opacity:.92}
+.art.wide{aspect-ratio:16/9}
+.art img{width:100%;height:100%;object-fit:cover}
+.rcard{display:block;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);transition:.15s}
+.rcard:hover{transform:translateY(-2px);border-color:var(--brand)}
+.rcard .art{border-radius:0}
+.rcard .b{padding:12px 14px}
+.rcard h3{font-size:1rem;margin:6px 0 4px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;font-size:.82rem;color:var(--muted)}
+
+/* search */
+.search{position:relative}
+.search .input{padding:14px 16px;font-size:1.05rem;border-radius:14px;padding-left:120px}
+.search .go{position:absolute;left:6px;top:6px;bottom:6px}
+.ac-list{position:absolute;top:100%;right:0;left:0;margin-top:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);z-index:30;overflow:hidden}
+.ac-list a{display:flex;justify-content:space-between;padding:9px 14px;font-size:.95rem}
+.ac-list a:hover{background:var(--brand-soft)}
+.hero{background:linear-gradient(135deg,#fbeee3,#f5e2d3);border-radius:20px;padding:36px 28px;margin-top:24px}
+.hero h1{font-size:2rem}
+
+/* layout */
+.layout-side{display:grid;grid-template-columns:240px 1fr;gap:24px}
+@media (max-width:820px){.layout-side{grid-template-columns:1fr}}
+.recipe-head{display:grid;grid-template-columns:1.1fr 1fr;gap:28px;align-items:start}
+@media (max-width:820px){.recipe-head{grid-template-columns:1fr}}
+.recipe-body{display:grid;grid-template-columns:1fr 1.6fr;gap:28px}
+@media (max-width:820px){.recipe-body{grid-template-columns:1fr}}
+.stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.stepper button{border:0;background:none;width:36px;height:36px;cursor:pointer;font-size:1.1rem}
+.stepper span{min-width:36px;text-align:center;font-weight:700}
+ol.steps{padding:0;margin:0;list-style:none;counter-reset:s}
+ol.steps li{counter-increment:s;display:flex;gap:14px;padding:12px 0;border-bottom:1px dashed var(--line)}
+ol.steps li::before{content:counter(s);flex:0 0 30px;height:30px;border-radius:50%;background:var(--brand-soft);color:var(--brand);display:flex;align-items:center;justify-content:center;font-weight:700}
+ul.ings{list-style:none;padding:0;margin:0}
+ul.ings li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+ul.ings .q{font-weight:600;white-space:nowrap}
+
+/* cook mode */
+.cook{position:fixed;inset:0;background:#1f1b18;color:#fbf6f0;z-index:50;display:flex;flex-direction:column}
+.cook .top{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid #3a332d}
+.cook .main{flex:1;display:grid;grid-template-columns:1.6fr 1fr;gap:24px;padding:28px;overflow:auto}
+@media (max-width:820px){.cook .main{grid-template-columns:1fr}}
+.cook .stext{font-size:clamp(1.4rem,3.2vw,2.3rem);line-height:1.45}
+.cook .panel{background:#2b2622;border-radius:16px;padding:18px}
+.cook .timer{font-size:3rem;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:1px}
+.cook .bottom{display:flex;gap:12px;padding:16px 20px;border-top:1px solid #3a332d}
+.cook .btn{background:#3a332d;border-color:#3a332d;color:#fbf6f0}
+.cook .btn.primary{background:var(--brand);border-color:var(--brand)}
+.progress{height:6px;background:#3a332d;border-radius:99px;overflow:hidden;flex:1}
+.progress i{display:block;height:100%;background:var(--brand)}
+
+/* generate */
+.ing-box{display:flex;flex-wrap:wrap;gap:6px;border:1px solid var(--line);border-radius:12px;padding:8px;background:var(--surface);position:relative}
+.ing-box input{border:0;outline:0;flex:1;min-width:140px;padding:4px}
+.stream{font-family:ui-monospace,Consolas,monospace;font-size:.88rem;background:#1f1b18;color:#e9e1d8;border-radius:12px;padding:14px;min-height:120px;white-space:pre-wrap}
+.added{font-size:.72rem;color:var(--warn);background:var(--warn-soft);border-radius:6px;padding:0 6px;margin-inline-start:6px}
+
+/* chat */
+.fab{position:fixed;left:20px;bottom:20px;z-index:40;border-radius:999px;padding:14px 20px;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+.chat{position:fixed;left:20px;bottom:86px;width:min(380px,calc(100vw - 32px));height:min(540px,calc(100vh - 120px));z-index:41;display:none;flex-direction:column;overflow:hidden}
+.chat.open{display:flex}
+.chat .hd{padding:12px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+.chat .msgs{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:#fcfaf7}
+.msg{max-width:88%;padding:9px 12px;border-radius:12px;font-size:.93rem}
+.msg.me{align-self:flex-start;background:var(--brand);color:#fff;border-bottom-right-radius:4px}
+.msg.bot{align-self:flex-end;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:4px}
+.msg .mini{display:flex;gap:8px;align-items:center;margin-top:8px;padding:6px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.msg .mini .art{width:52px;aspect-ratio:1;border-radius:8px;flex:0 0 52px}
+.msg .mini .art svg{width:70%}
+.chat form{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}
+
+/* misc */
+.toast{position:fixed;bottom:24px;right:50%;transform:translateX(50%);background:#2b2622;color:#fff;padding:10px 18px;border-radius:10px;z-index:60;opacity:0;transition:.25s;pointer-events:none}
+.toast.show{opacity:1}
+.kpi{padding:16px}
+.kpi b{display:block;font-size:1.6rem}
+.bar{display:flex;align-items:center;gap:10px;margin:8px 0}
+.bar .l{width:110px;font-size:.9rem}
+.bar .tr{flex:1;background:#f1ece5;border-radius:6px;height:22px;overflow:hidden}
+.bar .tr i{display:block;height:100%;background:var(--brand)}
+.check-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.check-item.done span.n{text-decoration:line-through;color:var(--muted)}
+.screen-map a{display:block}
+.screen-map .card:hover{border-color:var(--brand)}
+.imgcompare{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.imgbox{border:1px dashed var(--line);border-radius:12px;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fcfaf7;color:var(--muted);font-size:.9rem;text-align:center;padding:6px}
+.imgbox img{width:100%;height:100%;object-fit:cover}
+.enhanced{filter:brightness(1.12) contrast(1.15) saturate(1.25)}
+.lock{font-size:.82rem;background:#f4f1ec;border-radius:8px;padding:8px 10px;color:var(--muted)}
+footer.ft{margin:48px 0 90px;color:var(--muted);font-size:.85rem;text-align:center}
+@media print{
+  header.top,.fab,.chat,.no-print,footer.ft,.sim{display:none !important}
+  body{background:#fff}
+  .card{box-shadow:none}
+  .recipe-head{grid-template-columns:1fr 1fr}
+  .recipe-body{grid-template-columns:1fr 1.6fr}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <button class="btn sm ghost menu-btn" data-act="menu" aria-label="תפריט">☰</button>
+    <a class="logo" href="#/home">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18a9 9 0 0 1-18 0Z"/><path d="M8 8c0-1.5 1-2 1-3.5M12 8c0-1.5 1-2 1-3.5M16 8c0-1.5 1-2 1-3.5"/></svg>
+      מתכונים חכם
+    </a>
+    <nav class="main" id="nav"></nav>
+    <span class="spacer"></span>
+    <select class="role sim" id="role" title="הדמיית תפקיד">
+      <option value="guest">אורח</option>
+      <option value="user">משתמש רשום</option>
+      <option value="content_manager">מנהל תוכן</option>
+      <option value="sysadmin" selected>מנהל מערכת</option>
+    </select>
+  </div>
+</header>
+
+<main id="app" class="wrap"></main>
+
+<footer class="ft">אב-טיפוס מסכים לפי האפיון (גרסה 2) · כל הנתונים ותשובות ה-AI כאן מדומים · <a href="#/screens"><u>מפת מסכים</u></a></footer>
+
+<button class="btn primary fab" data-act="chat-toggle" aria-label="צ'אט עוזר">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12Z"/></svg>
+  עוזר מתכונים
+</button>
+<section class="card chat" id="chat" aria-label="צ'אט עוזר">
+  <div class="hd"><b>עוזר מתכונים</b><span class="badge b-ai">AI</span><span class="spacer"></span><button class="btn sm ghost" data-act="chat-toggle" aria-label="סגור">✕</button></div>
+  <div class="msgs" id="msgs"></div>
+  <form data-form="chat"><input class="input" name="m" placeholder="מה בא לכם לבשל?" autocomplete="off"><button class="btn primary">שלח</button></form>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===================== נתונים ===================== */
+const ING={
+ 'ביצים':['מוצרי מקרר','parve'],'גבינה בולגרית':['מוצרי חלב','dairy'],'גבינה צהובה':['מוצרי חלב','dairy'],'שמנת חמוצה':['מוצרי חלב','dairy'],
+ 'תרד':['ירקות ופירות','parve'],'בצל':['ירקות ופירות','parve'],'שום':['ירקות ופירות','parve'],'פלפל ירוק':['ירקות ופירות','parve'],'גזר':['ירקות ופירות','parve'],
+ 'בטטה':['ירקות ופירות','parve'],'תפוחי אדמה':['ירקות ופירות','parve'],'ברוקולי':['ירקות ופירות','parve'],'קישוא':['ירקות ופירות','parve'],'לימון':['ירקות ופירות','parve'],
+ 'עגבניות':['ירקות ופירות','parve'],'מלפפון':['ירקות ופירות','parve'],'פטרוזיליה':['ירקות ופירות','parve'],'כוסברה':['ירקות ופירות','parve'],
+ 'עוף שלם':['בשר ועוף','meat'],'בשר טחון':['בשר ועוף','meat'],'חזה עוף':['בשר ועוף','meat'],
+ 'שמן זית':['מזווה','parve'],'מלח':['מזווה','parve'],'פלפל שחור':['מזווה','parve'],'פפריקה':['מזווה','parve'],'כמון':['מזווה','parve'],'סוכר':['מזווה','parve'],'מים':['מזווה','parve'],
+ 'אורז':['מזווה','parve'],'רוטב סויה':['מזווה','parve'],'קמח':['מזווה','parve'],'עדשים כתומות':['מזווה','parve'],'פירורי לחם':['מזווה','parve'],'רסק עגבניות':['מזווה','parve'],
+ 'שמרים יבשים':['מזווה','parve'],'קקאו':['מזווה','parve'],'מרגרינה':['מוצרי מקרר','parve'],'קינואה':['מזווה','parve'],'חומוס מבושל':['מזווה','parve'],'פסטה':['מזווה','parve']
+};
+const BASIC=['מלח','פלפל שחור','שמן זית','מים','סוכר','פפריקה','כמון'];
+const K={meat:'בשרי',dairy:'חלבי',parve:'פרווה'};
+const DISH=['ראשונה','עיקרית','תוספת','קינוח','מאפה'];
+const DIET=['ללא גלוטן','טבעוני','ללא סוכר','ללא אגוזים'];
+const TIMETAGS=['בוקר','צהריים','ערב','הכנה מראש'];
+
+const R=[
+ {slug:'shakshuka-yeruka',title:'שקשוקה ירוקה עם בולגרית',desc:'מחבת ירוקה ועשירה עם תרד, פלפל וביצים רכות, מוגשת עם גבינה מפוררת.',k:'dairy',dish:'עיקרית',prep:10,cook:15,diff:'קל',serv:4,tt:['בוקר','ערב'],diet:['ללא גלוטן'],views:940,hue:95,status:'published',src:'admin',upd:'01/11/2026',
+  ings:[['ביצים',6,"יח'"],['תרד',300,'גרם'],['בצל',1,"יח'"],['שום',2,'שיניים'],['פלפל ירוק',1,"יח'"],['גבינה בולגרית',100,'גרם'],['שמן זית',2,'כפות'],['מלח',1,'כפית']],
+  steps:[['מחממים שמן במחבת רחבה ומטגנים את הבצל עד שהוא שקוף.',300,[2,6]],['מוסיפים שום, פלפל ותרד ומבשלים עד שהתרד מצטמק.',240,[3,4,1]],['יוצרים גומות ושוברים לתוכן את הביצים. מכסים ומבשלים על אש נמוכה.',480,[0]],['מפוררים בולגרית מעל, ממליחים ומגישים חם.',0,[5,7]]]},
+ {slug:'of-batanur',title:'עוף בתנור עם ירקות שורש',desc:'עוף שלם צלוי על מצע תפוחי אדמה, בטטה וגזר בתיבול פפריקה ושום.',k:'meat',dish:'עיקרית',prep:20,cook:70,diff:'בינוני',serv:6,tt:['ערב','הכנה מראש'],diet:['ללא גלוטן'],views:1210,hue:28,status:'published',src:'admin',upd:'30/10/2026',
+  ings:[['עוף שלם',1,"יח'"],['תפוחי אדמה',4,"יח'"],['בטטה',2,"יח'"],['גזר',3,"יח'"],['בצל',2,"יח'"],['שום',6,'שיניים'],['פפריקה',1,'כף'],['שמן זית',3,'כפות'],['מלח',2,'כפיות']],
+  steps:[['מחממים תנור ל-200 מעלות. חותכים את הירקות לגושים.',0,[1,2,3,4]],['מערבבים את הירקות עם שמן, שום ותבלינים ומסדרים בתבנית.',0,[5,6,7,8]],['מורחים את העוף בתיבול ומניחים מעל הירקות.',0,[0]],['אופים מכוסה כשעה, ואז מגלים ואופים עוד 10 דקות עד להשחמה.',3600,[]]]},
+ {slug:'orez-mukpatz',title:'אורז מוקפץ עם ירקות',desc:'ארוחה מהירה מאורז מבושל, ירקות פריכים ורוטב סויה.',k:'parve',dish:'עיקרית',prep:10,cook:20,diff:'קל',serv:4,tt:['צהריים','ערב'],diet:['טבעוני'],views:780,hue:45,status:'published',src:'admin',upd:'28/10/2026',
+  ings:[['אורז',2,'כוסות'],['ברוקולי',1,'ראש'],['גזר',2,"יח'"],['קישוא',1,"יח'"],['שום',3,'שיניים'],['רוטב סויה',3,'כפות'],['שמן זית',2,'כפות']],
+  steps:[['מבשלים את האורז לפי ההוראות ומצננים.',1080,[0]],['מקפיצים במחבת חמה את הירקות והשום כ-5 דקות.',300,[1,2,3,4,6]],['מוסיפים את האורז ואת רוטב הסויה ומערבבים היטב.',120,[0,5]]]},
+ {slug:'pashtidat-tered',title:'פשטידת תרד וגבינות',desc:'פשטידה אפויה ועסיסית, מתאימה להכנה מראש ולהגשה חמה או בטמפרטורת החדר.',k:'dairy',dish:'עיקרית',prep:15,cook:40,diff:'קל',serv:8,tt:['צהריים','הכנה מראש'],diet:[],views:650,hue:120,status:'published',src:'admin',upd:'25/10/2026',
+  ings:[['תרד',500,'גרם'],['ביצים',4,"יח'"],['גבינה בולגרית',250,'גרם'],['גבינה צהובה',150,'גרם'],['שמנת חמוצה',200,'מ"ל'],['קמח',3,'כפות'],['מלח',1,'כפית']],
+  steps:[['מחממים תנור ל-180 מעלות ומשמנים תבנית.',0,[]],['מערבבים בקערה את כל המרכיבים.',0,[0,1,2,3,4,5,6]],['יוצקים לתבנית ואופים עד להזהבה.',2400,[]]]},
+ {slug:'marak-adashim',title:'מרק עדשים כתומות',desc:'מרק סמיך ומחמם עם כמון ולימון, טבעוני וללא גלוטן.',k:'parve',dish:'ראשונה',prep:10,cook:35,diff:'קל',serv:6,tt:['ערב','הכנה מראש'],diet:['טבעוני','ללא גלוטן'],views:820,hue:36,status:'published',src:'admin',upd:'22/10/2026',
+  ings:[['עדשים כתומות',2,'כוסות'],['בצל',1,"יח'"],['גזר',2,"יח'"],['שום',3,'שיניים'],['כמון',1,'כפית'],['לימון',1,"יח'"],['מים',8,'כוסות'],['שמן זית',2,'כפות'],['מלח',1.5,'כפיות']],
+  steps:[['מטגנים בצל, גזר ושום בשמן.',420,[1,2,3,7]],['מוסיפים עדשים, מים וכמון ומבשלים.',1500,[0,4,6]],['טוחנים, מתבלים במלח ולימון ומגישים.',0,[5,8]]]},
+ {slug:'ktzitzot',title:'קציצות בשר ברוטב עגבניות',desc:'קציצות רכות שמתבשלות לאט ברוטב עגבניות ביתי.',k:'meat',dish:'עיקרית',prep:25,cook:40,diff:'בינוני',serv:6,tt:['ערב','הכנה מראש'],diet:[],views:1100,hue:8,status:'published',src:'admin',upd:'20/10/2026',
+  ings:[['בשר טחון',1,'ק"ג'],['ביצים',1,"יח'"],['פירורי לחם',0.5,'כוס'],['בצל',2,"יח'"],['שום',4,'שיניים'],['עגבניות',4,"יח'"],['רסק עגבניות',2,'כפות'],['פפריקה',1,'כפית'],['מלח',2,'כפיות']],
+  steps:[['מערבבים בשר, ביצה, פירורים, בצל קצוץ ותבלינים ויוצרים קציצות.',0,[0,1,2,3,8]],['מכינים רוטב משום, עגבניות מרוסקות ורסק.',600,[4,5,6,7]],['מניחים את הקציצות ברוטב ומבשלים על אש נמוכה.',1800,[]]]},
+ {slug:'ugat-shmarim',title:'עוגת שמרים שוקולד',desc:'עוגה קלועה עם מלית קקאו עשירה. דורשת זמן התפחה.',k:'parve',dish:'מאפה',prep:140,cook:35,diff:'מאתגר',serv:12,tt:['הכנה מראש'],diet:[],views:1350,hue:22,status:'published',src:'admin',upd:'18/10/2026',
+  ings:[['קמח',1,'ק"ג'],['שמרים יבשים',2,'כפות'],['סוכר',0.75,'כוס'],['מרגרינה',200,'גרם'],['ביצים',2,"יח'"],['מים',1.5,'כוסות'],['קקאו',0.5,'כוס']],
+  steps:[['לשים קמח, שמרים, סוכר, ביצים, מים וחצי מהמרגרינה לבצק רך.',600,[0,1,2,3,4,5]],['מתפיחים במקום חם עד להכפלת הנפח.',5400,[]],['מרדדים, מורחים מלית קקאו ומרגרינה, מגלגלים וקולעים.',0,[3,6]],['אופים בתנור שחומם ל-175 מעלות.',2100,[]]]},
+ {slug:'salat-kinoa',title:'סלט קינואה וירקות',desc:'סלט רענן עם קינואה, חומוס וירקות קצוצים בלימון ושמן זית.',k:'parve',dish:'תוספת',prep:15,cook:15,diff:'קל',serv:4,tt:['צהריים'],diet:['טבעוני','ללא גלוטן'],views:540,hue:70,status:'draft',src:'admin',upd:'02/11/2026',
+  ings:[['קינואה',1,'כוס'],['מלפפון',2,"יח'"],['עגבניות',2,"יח'"],['פטרוזיליה',1,'צרור'],['חומוס מבושל',1,'כוס'],['לימון',1,"יח'"],['שמן זית',3,'כפות'],['מלח',1,'כפית']],
+  steps:[['מבשלים את הקינואה 15 דקות ומצננים.',900,[0]],['קוצצים את הירקות והפטרוזיליה.',0,[1,2,3]],['מערבבים הכל ומתבלים.',0,[4,5,6,7]]]}
+];
+const pub=()=>R.filter(r=>r.status==='published');
+const bySlug=s=>R.find(r=>r.slug===s);
+
+/* ===================== מצב ===================== */
+const S={
+ role:'sysadmin',fav:new Set(['of-batanur','marak-adashim']),
+ shop:[],servings:{},chatAsked:false,
+ used:3,
+ gen:{mode:'ingredients',ings:['חזה עוף','קישוא','בצל'],variant:0,result:null},
+ cook:null,
+ users:[
+  {name:'מנהל ראשי',email:'admin@example.com',role:'sysadmin',active:true},
+  {name:'foo bar',email:'foo@example.com',role:'content_manager',active:true},
+  {name:'baz qux',email:'baz@example.com',role:'content_manager',active:true},
+  {name:'lorem ipsum',email:'lorem@example.com',role:'user',active:true},
+  {name:'dolor sit',email:'dolor@example.com',role:'user',active:false}
+ ],
+ settings:{qGuest:3,qUser:20,rate:10,wSim:0.6,wTime:0.3,wPop:0.1}
+};
+function addToShop(r,serv){
+  const f=(serv||r.serv)/r.serv;
+  r.ings.forEach(([n,q,u])=>{
+    const ex=S.shop.find(i=>i.n===n&&i.u===u);
+    if(ex){ex.q+=q*f;if(!ex.from.includes(r.title))ex.from.push(r.title)}
+    else S.shop.push({n,q:q*f,u,from:[r.title],done:false});
+  });
+}
+addToShop(bySlug('shakshuka-yeruka'));addToShop(bySlug('orez-mukpatz'));
+
+/* ===================== עזרים ===================== */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>{const v=Math.round(n*100)/100;const m={0.25:'¼',0.5:'½',0.75:'¾'};const w=Math.floor(v),fr=Math.round((v-w)*100)/100;if(m[fr])return (w?w+' ':'')+m[fr];return String(v)};
+const mins=m=>m>=60?`${Math.floor(m/60)} ש'${m%60?` ${m%60} ד'`:''}`:`${m} דק'`;
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('show'),2200)}
+const kb=k=>`<span class="badge k-${k}">${K[k]}</span>`;
+const isStaff=()=>['content_manager','sysadmin'].includes(S.role);
+const isUser=()=>S.role!=='guest';
+
+function art(r,cls=''){
+  const h=r?r.hue:270;
+  return `<div class="art ${cls}" style="background:linear-gradient(140deg,hsl(${h} 62% 80%),hsl(${h+18} 52% 62%))">
+   <svg viewBox="0 0 120 90" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 48h92a46 30 0 0 1-92 0Z" fill="rgba(255,255,255,.25)"/><path d="M8 48h104"/>
+    <path d="M44 34c0-6 5-8 5-14M60 34c0-6 5-8 5-14M76 34c0-6 5-8 5-14" opacity=".85"/></svg></div>`;
+}
+function rcard(r){
+  return `<a class="rcard" href="#/recipe/${r.slug}">${art(r)}
+   <div class="b"><div class="row" style="gap:6px">${kb(r.k)}<span class="chip">${r.dish}</span>${r.src==='ai'?'<span class="badge b-ai">נוצר ב-AI</span>':''}</div>
+   <h3>${esc(r.title)}</h3><div class="meta"><span>${mins(r.prep+r.cook)}</span><span>${r.diff}</span><span>${r.serv} מנות</span></div></div></a>`;
+}
+function searchBox(val='',big=true){
+  return `<form class="search" data-form="search" autocomplete="off">
+    <input class="input ac" name="q" value="${esc(val)}" placeholder="חפשו במילים שלכם, למשל: מנה פרווה מהירה לערב" aria-label="חיפוש">
+    <button class="btn primary go">חיפוש חכם</button>
+    <div class="ac-list" hidden></div></form>`;
+}
+
+/* ===================== פענוח חיפוש (מדמה את Claude) ===================== */
+function parseQuery(text){
+  const t=' '+text+' ',p={};
+  if(/בשרי/.test(t))p.k='meat';else if(/חלבי/.test(t))p.k='dairy';else if(/פרוו?ה|טבעוני/.test(t))p.k='parve';
+  const m=t.match(/(\d+)\s*דק/);if(m)p.t=m[1];else if(/חצי שעה|מהיר|קל להכנה/.test(t))p.t='30';else if(/ שעה /.test(t))p.t='60';
+  if(/קינוח|מתוק/.test(t))p.d='קינוח';else if(/מאפה|עוגה/.test(t))p.d='מאפה';else if(/תוספת|סלט/.test(t))p.d='תוספת';else if(/ראשונה|מרק/.test(t))p.d='ראשונה';else if(/עיקרית|ארוחת ערב/.test(t))p.d='עיקרית';
+  if(/(ללא|בלי) גלוטן/.test(t))p.g='ללא גלוטן';
+  const stop=/^(מנה|מנות|משהו|עם|של|לערב|לבוקר|בערב|בבוקר|מהירה?|קלה?|בשרי|חלבי|פרווה|פרוה|טבעוני|דקות?|ללא|בלי|גלוטן|חצי|שעה|ל?ארבעה|רוצה|בא|לי|מתכון|\d+)$/;
+  const words=text.split(/\s+/).filter(w=>w.length>1&&!stop.test(w));
+  const w=words.filter(x=>R.some(r=>r.title.includes(x)||r.ings.some(i=>i[0].includes(x))));
+  if(w.length)p.w=w.join(',');
+  return p;
+}
+function filterR(p){
+  return pub().filter(r=>(!p.k||r.k===p.k)&&(!p.t||r.prep+r.cook<=+p.t)&&(!p.d||r.dish===p.d)&&(!p.g||r.diet.includes(p.g))
+   &&(!p.w||p.w.split(',').every(x=>r.title.includes(x)||r.ings.some(i=>i[0].includes(x)))));
+}
+const FL={k:v=>K[v],t:v=>`עד ${v} דק'`,d:v=>v,g:v=>v,w:v=>v.split(',').join(' + ')};
+
+/* ===================== מסכים ===================== */
+const V={};
+
+V.home=()=>{
+  const d=new Date(),hr=d.getHours(),day=d.getDay();
+  let ctx,tag;
+  if(day===4||day===5){ctx='מתאים להכנה מראש ולאירוח';tag='הכנה מראש'}
+  else if(hr<11){ctx='מתאים לבוקר';tag='בוקר'}else if(hr<16){ctx='מתאים לצהריים';tag='צהריים'}else{ctx='מתאים לארוחת ערב';tag='ערב'}
+  const rk=[...pub()].sort((a,b)=>(b.tt.includes(tag)-a.tt.includes(tag))||b.views-a.views);
+  const f=rk[0],o=rk.slice(1,5);
+  return `
+  <section class="hero">
+    <h1>מה מבשלים היום?</h1>
+    <p class="muted">כתבו מה בא לכם במילים חופשיות, והחיפוש החכם יתרגם את זה למסננים.</p>
+    ${searchBox()}
+    <div class="row" style="margin-top:14px;gap:8px">
+      <span class="small muted">קיצורים:</span>
+      <a class="chip" href="#/search?k=parve">פרווה</a><a class="chip" href="#/search?k=meat">בשרי</a><a class="chip" href="#/search?k=dairy">חלבי</a>
+      <a class="chip" href="#/search?t=30">עד 30 דק'</a><a class="chip" href="#/search?d=מאפה">מאפים</a><a class="chip" href="#/search?g=ללא גלוטן">ללא גלוטן</a>
+      <a class="chip ai" href="#/generate">יש לי רכיבים – צור לי מתכון</a>
+    </div>
+  </section>
+  <section class="section">
+    <div class="row"><h2 style="margin:0">${ctx}</h2><span class="badge b-ai small">המלצה לפי הקשר זמן</span></div>
+    <div class="grid" style="grid-template-columns:1.4fr 1fr;margin-top:14px" id="homegrid">
+      <a class="rcard" href="#/recipe/${f.slug}">${art(f,'wide')}
+        <div class="b"><div class="row" style="gap:6px">${kb(f.k)}<span class="chip">${f.dish}</span><span class="chip">מתכון מובחר</span></div>
+        <h3 style="font-size:1.35rem">${esc(f.title)}</h3><p class="muted" style="margin:0 0 6px">${esc(f.desc)}</p>
+        <div class="meta"><span>${mins(f.prep+f.cook)}</span><span>${f.diff}</span><span>${f.serv} מנות</span></div></div></a>
+      <div class="grid g2">${o.map(rcard).join('')}</div>
+    </div>
+  </section>
+  <section class="section">
+    <h2>לפי סוג מנה</h2>
+    <div class="grid g4">${DISH.filter(x=>x!=='קינוח').map(x=>`<a class="card pad" href="#/search?d=${x}"><b>${x}</b><div class="small muted">${pub().filter(r=>r.dish===x).length} מתכונים</div></a>`).join('')}</div>
+  </section>
+  <style>@media(max-width:820px){#homegrid{grid-template-columns:1fr!important}}</style>`;
+};
+
+V.search=(q)=>{
+  if(q.get('q')&&!q.has('x')&&!['k','t','d','g','w'].some(x=>q.has(x))){const pp=parseQuery(q.get('q'));if(Object.keys(pp).length){setTimeout(()=>location.replace('#/search?'+new URLSearchParams({q:q.get('q'),...pp,x:'1'}).toString()));return ''}}
+  const p={};['k','t','d','g','w'].forEach(x=>{if(q.get(x))p[x]=q.get(x)});
+  const text=q.get('q')||'';
+  const res=filterR(p);
+  const keys=Object.keys(p);
+  const chips=keys.map(x=>`<span class="chip x ${text?'ai':''}">${esc(FL[x](p[x]))}<button data-act="rm-filter" data-k="${x}" aria-label="הסר מסנן">×</button></span>`).join('');
+  let relax='';
+  if(!res.length){
+    const opts=keys.map(x=>{const pp={...p};delete pp[x];return [x,filterR(pp).length]}).filter(a=>a[1]).sort((a,b)=>b[1]-a[1]);
+    relax=`<div class="card pad empty">
+      <h3 style="color:var(--ink)">לא נמצאו מתכונים שעונים על כל המסננים</h3>
+      ${opts.length?`<p>נמצאו <b>${opts[0][1]}</b> מתכונים בלי המסנן „${esc(FL[opts[0][0]](p[opts[0][0]]))}”.</p>
+      <button class="btn" data-act="rm-filter" data-k="${opts[0][0]}">הצג בלי המסנן הזה</button>`:''}
+      <p style="margin-top:18px">או שניצור מתכון חדש בדיוק לפי הבקשה:</p>
+      <a class="btn ai" href="#/generate?mode=free&text=${encodeURIComponent(text||keys.map(x=>FL[x](p[x])).join(' '))}">צור לי מתכון</a></div>`;
+  }
+  const sel=(k,label,opts)=>`<div class="field"><label class="f">${label}</label><select class="input" data-act="set-filter" data-k="${k}"><option value="">הכל</option>${opts.map(([v,l])=>`<option value="${v}" ${p[k]===String(v)?'selected':''}>${l}</option>`).join('')}</select></div>`;
+  return `
+  <div class="section">${searchBox(text)}</div>
+  ${text?`<div class="note ai" style="margin-bottom:14px"><b>פענוח AI:</b> „${esc(text)}” ← ${keys.length?'זוהו המסננים הבאים':'לא זוהו מסננים, מוצגים כל המתכונים'}</div>`:''}
+  <div class="layout-side">
+    <aside class="card pad" style="align-self:start">
+      <h3>סינון</h3>
+      ${sel('k','סוג',Object.entries(K))}
+      ${sel('d','סוג מנה',DISH.map(x=>[x,x]))}
+      ${sel('t','זמן כולל',[[30,"עד 30 דק'"],[60,'עד שעה'],[120,'עד שעתיים']])}
+      ${sel('g','מגבלות תזונה',DIET.map(x=>[x,x]))}
+    </aside>
+    <div>
+      <div class="row" style="margin-bottom:12px"><b>${res.length} מתכונים</b>${chips}</div>
+      ${res.length?`<div class="grid g3">${res.map(rcard).join('')}</div>`:relax}
+    </div>
+  </div>`;
+};
+
+V.recipe=(slug)=>{
+  const r=bySlug(slug);if(!r)return V.notfound();
+  const sv=S.servings[slug]||r.serv,f=sv/r.serv;
+  const sim=pub().filter(x=>x!==r&&x.k===r.k).map(x=>[x,x.ings.filter(i=>r.ings.some(j=>j[0]===i[0])).length+(x.dish===r.dish?2:0)]).sort((a,b)=>b[1]-a[1]).slice(0,4).map(a=>a[0]);
+  const fav=S.fav.has(slug);
+  return `
+  <div class="section small muted no-print"><a href="#/home">בית</a> / <a href="#/search?d=${r.dish}">${r.dish}</a> / ${esc(r.title)}</div>
+  <div class="recipe-head">
+    ${art(r,'wide')}
+    <div>
+      <div class="row" style="gap:6px">${kb(r.k)}<span class="chip">${r.dish}</span>${r.diet.map(x=>`<span class="chip">${x}</span>`).join('')}</div>
+      <h1 style="margin-top:10px">${esc(r.title)}</h1>
+      <p class="muted">${esc(r.desc)}</p>
+      <div class="grid g3 card pad" style="gap:8px;text-align:center">
+        <div><div class="small muted">הכנה</div><b>${mins(r.prep)}</b></div>
+        <div><div class="small muted">בישול</div><b>${mins(r.cook)}</b></div>
+        <div><div class="small muted">רמת קושי</div><b>${r.diff}</b></div>
+      </div>
+      <div class="row no-print" style="margin-top:16px">
+        <a class="btn primary" href="#/cook/${slug}">התחל לבשל</a>
+        <button class="btn" data-act="fav" data-s="${slug}">${fav?'♥ במועדפים':'♡ למועדפים'}</button>
+        <button class="btn" data-act="to-shop" data-s="${slug}">הוסף לרשימת קניות</button>
+        <a class="btn ai" href="#/generate?mode=adapt&r=${slug}">התאם לי</a>
+        <button class="btn ghost" data-act="print">הדפסה</button>
+        <button class="btn ghost" data-act="share">שיתוף</button>
+      </div>
+    </div>
+  </div>
+  <div class="recipe-body section">
+    <div class="card pad" style="align-self:start">
+      <div class="row"><h2 style="margin:0">רכיבים</h2><span class="spacer"></span>
+        <div class="stepper" aria-label="מספר מנות"><button data-act="serv" data-s="${slug}" data-d="-1">−</button><span>${sv}</span><button data-act="serv" data-s="${slug}" data-d="1">+</button></div><span class="small muted">מנות</span></div>
+      <ul class="ings" style="margin-top:10px">${r.ings.map(([n,q,u])=>`<li><span>${n}</span><span class="q">${fmt(q*f)} ${u}</span></li>`).join('')}</ul>
+    </div>
+    <div class="card pad"><h2>אופן ההכנה</h2>
+      <ol class="steps">${r.steps.map(s=>`<li><div>${esc(s[0])}${s[1]?`<div class="small muted">⏱ ${mins(Math.round(s[1]/60))}</div>`:''}</div></li>`).join('')}</ol></div>
+  </div>
+  <section class="section no-print"><div class="row"><h2 style="margin:0">מתכונים דומים</h2><span class="badge b-ai small">המלצה לפי דמיון · ${K[r.k]}</span></div>
+    <div class="grid g4" style="margin-top:14px">${sim.map(rcard).join('')||'<p class="muted">אין עדיין מתכונים דומים.</p>'}</div></section>`;
+};
+
+V.cook=(slug)=>{
+  const r=bySlug(slug);if(!r)return V.notfound();
+  if(!S.cook||S.cook.slug!==slug)S.cook={slug,i:0,left:r.steps[0][1],run:false};
+  const c=S.cook,s=r.steps[c.i];
+  const t=c.left,mm=String(Math.floor(t/60)).padStart(2,'0'),ss=String(t%60).padStart(2,'0');
+  return `<div class="cook">
+    <div class="top"><b>${esc(r.title)}</b><span class="muted small">שלב ${c.i+1} מתוך ${r.steps.length}</span>
+      <div class="progress"><i style="width:${(c.i+1)/r.steps.length*100}%"></i></div>
+      <span class="small" id="wl">מסך פעיל</span>
+      <a class="btn sm" href="#/recipe/${slug}">יציאה</a></div>
+    <div class="main" id="swipe">
+      <div class="stext">${esc(s[0])}</div>
+      <div class="grid" style="align-content:start">
+        ${s[1]?`<div class="panel"><div class="small" style="opacity:.7">טיימר לשלב</div><div class="timer" id="tm">${mm}:${ss}</div>
+          <div class="row"><button class="btn primary" data-act="timer">${c.run?'השהה':'הפעל'}</button><button class="btn" data-act="timer-reset">איפוס</button></div></div>`:''}
+        <div class="panel"><div class="small" style="opacity:.7;margin-bottom:6px">רכיבים לשלב הזה</div>
+          ${s[2].length?`<ul class="ings">${s[2].map(i=>{const g=r.ings[i];return `<li style="border-color:#3a332d"><span>${g[0]}</span><span class="q">${fmt(g[1])} ${g[2]}</span></li>`}).join('')}</ul>`:'<span style="opacity:.6">אין רכיבים חדשים בשלב זה</span>'}</div>
+      </div>
+    </div>
+    <div class="bottom"><button class="btn" data-act="step" data-d="-1" ${c.i===0?'disabled':''}>→ הקודם</button><span class="spacer"></span>
+      ${c.i<r.steps.length-1?`<button class="btn primary" data-act="step" data-d="1">הבא ←</button>`:`<a class="btn primary" href="#/recipe/${slug}">סיימתי</a>`}</div>
+  </div>`;
+};
+
+V.generate=(q)=>{
+  const g=S.gen;
+  if(q.get('mode')&&!g._from){g.mode=q.get('mode');g._from=1}
+  if(q.get('text'))g.text=q.get('text');
+  if(q.get('r'))g.r=q.get('r');
+  const quota=S.role==='guest'?S.settings.qGuest:S.settings.qUser;
+  const tab=(m,l)=>`<button class="${g.mode===m?'on':''}" data-act="gmode" data-m="${m}">${l}</button>`;
+  let form='';
+  if(g.mode==='ingredients')form=`
+    <div class="field"><label class="f">מה יש לכם במטבח?</label>
+      <div class="ing-box">${g.ings.map((x,i)=>`<span class="chip x">${esc(x)}<button type="button" data-act="ing-rm" data-i="${i}">×</button></span>`).join('')}
+      <input id="ingin" list="inglist" placeholder="הקלידו רכיב ולחצו Enter"></div>
+      <datalist id="inglist">${Object.keys(ING).map(x=>`<option value="${x}">`).join('')}</datalist></div>
+    <div class="grid g2"><div class="field"><label class="f">מספר מנות</label><input class="input" type="number" id="gserv" value="4" min="1"></div>
+    <div class="field"><label class="f">סוג</label><select class="input" id="gk"><option value="">לפי הרכיבים</option>${Object.entries(K).map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select></div></div>
+    <div class="lock">ה-AI רשאי להוסיף רק רכיבי בסיס: ${BASIC.join(', ')}. כל תוספת תסומן.</div>`;
+  else if(g.mode==='free')form=`
+    <div class="field"><label class="f">תארו מה אתם רוצים</label><textarea class="input" id="gtext" rows="4" placeholder="למשל: מנה קלה לארבעה בחצי שעה">${esc(g.text||'')}</textarea></div>`;
+  else form=`
+    <div class="field"><label class="f">מתכון בסיס</label><select class="input" id="gr">${pub().map(r=>`<option value="${r.slug}" ${g.r===r.slug?'selected':''}>${esc(r.title)}</option>`).join('')}</select></div>
+    <div class="field"><label class="f">מה לשנות?</label><input class="input" id="greq" placeholder="למשל: ללא גלוטן / לקצר את זמן הבישול / להחליף רכיב"></div>`;
+  return `
+  <div class="section"><h1>יצירה חכמה</h1><p class="muted">ה-AI יוצר מתכון מלא אחד בכל פעם. לא מתאים? לחצו „נסה שוב”.</p></div>
+  <div class="grid" style="grid-template-columns:1fr 1.2fr;align-items:start" id="gengrid">
+    <div class="card pad">
+      <div class="tabs">${tab('ingredients','מהרכיבים שלי')}${tab('free','מתיאור חופשי')}${tab('adapt','התאמת מתכון')}</div>
+      ${form}
+      <div class="row" style="margin-top:16px"><button class="btn ai" data-act="gen">צור מתכון</button><span class="small muted">נותרו ${Math.max(quota-S.used,0)} מתוך ${quota} יצירות היום</span></div>
+    </div>
+    <div id="genout">${g.result?resultCard(g.result):`<div class="card pad empty">התוצאה תופיע כאן</div>`}</div>
+  </div><style>@media(max-width:900px){#gengrid{grid-template-columns:1fr!important}}</style>`;
+};
+function mockGen(){
+  const g=S.gen,v=g.variant;let title,ings=[],steps,k='parve',changes=[],warn='',serv=4,time=30;
+  if(g.mode==='ingredients'){
+    let list=g.ings.length?[...g.ings]:['ביצים','תרד'];
+    const hasM=list.some(x=>(ING[x]||[])[1]==='meat'),hasD=list.some(x=>(ING[x]||[])[1]==='dairy');
+    if(hasM&&hasD){warn='זוהה ערבוב בשר וחלב ברכיבים. המתכון נוצר מחדש בלי מוצרי החלב.';list=list.filter(x=>(ING[x]||[])[1]!=='dairy')}
+    k=list.some(x=>(ING[x]||[])[1]==='meat')?'meat':list.some(x=>(ING[x]||[])[1]==='dairy')?'dairy':'parve';
+    const [a,b]=[list[0],list[1]||'ירקות'];
+    title=[`מחבת ${a} ו${b} בתיבול ביתי`,`תבשיל ${a} עם ${b}`,`${a} אפוי עם ${b} ועשבי תיבול`][v%3];
+    const am=[[300,'גרם'],[2,"יח'"],[1,'כוס'],[150,'גרם']];
+    ings=list.map((x,i)=>[x,am[i%4][0],am[i%4][1],false]).concat([['שמן זית',2,'כפות',true],['מלח',1,'כפית',true],['פלפל שחור',0.5,'כפית',true]]);
+    steps=[`חותכים את ה${list.join(', ')} לחתיכות אחידות.`,`מחממים שמן זית במחבת רחבה ומוסיפים את ה${a}.`,`מוסיפים את שאר הרכיבים, מתבלים במלח ופלפל ומבשלים 15 דקות.`,'טועמים, מתקנים תיבול ומגישים.'];
+    serv=+($('#gserv')?.value||4);
+  }else if(g.mode==='free'){
+    const t=$('#gtext')?.value||g.text||'';g.text=t;
+    title=['קערת אורז וירקות מוקפצים','פסטה ברוטב ירקות קלויים','תבשיל עדשים וירקות מהיר'][v%3];
+    ings=[['אורז',1.5,'כוסות',false],['קישוא',1,"יח'",false],['גזר',2,"יח'",false],['בצל',1,"יח'",false],['שום',2,'שיניים',false],['שמן זית',2,'כפות',false],['מלח',1,'כפית',false]];
+    steps=['מבשלים את הבסיס לפי ההוראות.','מקפיצים את הירקות במחבת חמה.','מאחדים, מתבלים ומגישים.'];
+    if(/(\d+)\s*דק|חצי שעה/.test(t))time=30;
+    const m=t.match(/ל?(שניים|שלושה|ארבעה|חמישה|שישה)/);if(m)serv={שניים:2,שלושה:3,ארבעה:4,חמישה:5,שישה:6}[m[1]];
+  }else{
+    const r=bySlug($('#gr')?.value||g.r||'pashtidat-tered'),req=$('#greq')?.value||'';
+    k=r.k;title=`${r.title} – גרסה מותאמת`;serv=r.serv;time=r.prep+r.cook;
+    ings=r.ings.map(i=>[...i,false]);steps=r.steps.map(s=>s[0]);
+    const fi=ings.findIndex(i=>i[0]==='קמח'||i[0]==='פירורי לחם');
+    if(/גלוטן/.test(req)&&fi>-1){changes.push(`הוחלף: ${ings[fi][0]} ← קמח אורז`);ings[fi]=['קמח אורז',ings[fi][1],ings[fi][2],'changed']}
+    else if(/זמן|מהיר|לקצר/.test(req)){time=Math.max(15,time-15);changes.push('זמן הבישול קוצר ב-15 דקות (אש גבוהה יותר וחיתוך דק יותר)')}
+    else changes.push(`בוצעה התאמה לפי הבקשה: „${req||'ללא בקשה ספציפית'}”`);
+  }
+  return {title,k,serv,time,ings,steps,changes,warn,mode:g.mode};
+}
+function resultCard(x){
+  return `<div class="card pad">
+    ${x.warn?`<div class="note" style="margin-bottom:12px">${x.warn}</div>`:''}
+    <div class="row" style="gap:6px">${kb(x.k)}<span class="badge b-ai">נוצר ב-AI</span><span class="chip">${x.serv} מנות</span><span class="chip">${mins(x.time)}</span></div>
+    <div class="row" style="margin-top:12px;align-items:flex-start"><div style="width:84px">${art({hue:200},'')}</div><h2 style="flex:1">${esc(x.title)}</h2></div>
+    ${x.changes.length?`<div class="note ai small" style="margin:8px 0">${x.changes.map(esc).join('<br>')}</div>`:''}
+    <div class="small" style="color:var(--ok);margin:6px 0">נבדק: אין ערבוב בשר וחלב · המבנה עבר ולידציה</div>
+    <h3 style="margin-top:14px">רכיבים</h3>
+    <ul class="ings">${x.ings.map(([n,q,u,a])=>`<li><span>${esc(n)}${a===true?'<span class="added">רכיב שלא הוזן</span>':a==='changed'?'<span class="added">הוחלף</span>':''}</span><span class="q">${fmt(q)} ${u}</span></li>`).join('')}</ul>
+    <h3 style="margin-top:14px">אופן ההכנה</h3>
+    <ol class="steps">${x.steps.map(s=>`<li><div>${esc(s)}</div></li>`).join('')}</ol>
+    <div class="row" style="margin-top:14px"><button class="btn primary" data-act="gen-save">שמור לאוסף שלי</button><button class="btn" data-act="gen-again">נסה שוב</button></div>
+  </div>`;
+}
+
+V.shopping=()=>{
+  const groups={};S.shop.forEach((it,i)=>{const c=(ING[it.n]||['אחר'])[0];(groups[c]=groups[c]||[]).push([it,i])});
+  const left=S.shop.filter(i=>!i.done).length;
+  return `
+  <div class="section row"><h1 style="margin:0">רשימת קניות</h1><span class="spacer"></span>
+    <button class="btn no-print" data-act="copy-shop">העתקה</button><button class="btn no-print" data-act="print">הדפסה</button><button class="btn danger no-print" data-act="clear-shop">ניקוי הרשימה</button></div>
+  ${!isUser()?'<div class="note no-print" style="margin-bottom:14px">כאורח, הרשימה נשמרת בדפדפן בלבד. <a href="#/login"><u>התחברו</u></a> כדי לשמור אותה בחשבון.</div>':''}
+  ${S.shop.length?`<p class="muted">${left} פריטים לקנייה · רכיבים זהים אוחדו מכל המתכונים</p>
+  <div class="grid g2">${Object.entries(groups).map(([c,items])=>`<div class="card pad"><h3>${c}</h3>
+    ${items.map(([it,i])=>`<label class="check-item ${it.done?'done':''}"><input type="checkbox" data-act="shop-check" data-i="${i}" ${it.done?'checked':''}>
+      <span class="n" style="flex:1"><b>${it.n}</b> <span class="muted small">· ${esc(it.from.join(', '))}</span></span><span class="q">${fmt(it.q)} ${it.u}</span>
+      <button class="btn sm ghost no-print" data-act="shop-rm" data-i="${i}" aria-label="הסר">✕</button></label>`).join('')}</div>`).join('')}</div>`
+  :`<div class="card empty">הרשימה ריקה. פתחו מתכון ולחצו „הוסף לרשימת קניות”.<br><br><a class="btn primary" href="#/home">למתכונים</a></div>`}`;
+};
+
+V.favorites=()=>{
+  const list=R.filter(r=>S.fav.has(r.slug));
+  return `<div class="section"><h1>המועדפים שלי</h1>${!isUser()?'<p class="muted small">כאורח, המועדפים נשמרים בדפדפן בלבד, ויעברו לחשבון לאחר הרשמה.</p>':''}</div>
+  ${list.length?`<div class="grid g4">${list.map(rcard).join('')}</div>`:'<div class="card empty">עדיין אין מועדפים.</div>'}`;
+};
+
+V.login=(q)=>{
+  const reg=q.get('tab')==='register';
+  return `<div style="max-width:440px;margin:40px auto" class="card pad">
+    <div class="tabs"><a class="${reg?'':'on'}" href="#/login">התחברות</a><a class="${reg?'on':''}" href="#/login?tab=register">הרשמה</a></div>
+    <form data-form="login">
+      ${reg?'<div class="field"><label class="f">שם תצוגה</label><input class="input" required></div>':''}
+      <div class="field"><label class="f">אימייל</label><input class="input" type="email" required placeholder="foo@example.com"></div>
+      <div class="field"><label class="f">סיסמה</label><input class="input" type="password" required minlength="8"></div>
+      ${reg?`<div class="field"><label class="f">מגבלות תזונה (אופציונלי)</label><div class="row">${DIET.map(x=>`<label class="chip"><input type="checkbox"> ${x}</label>`).join('')}</div></div>`:''}
+      <button class="btn primary" style="width:100%;justify-content:center">${reg?'יצירת חשבון':'כניסה'}</button>
+      <p class="small muted" style="margin-top:12px">${reg?'אין צורך באימות מייל. מועדפים ורשימת קניות שנשמרו כאורח יועברו לחשבון.':'שכחתם סיסמה? מנהל המערכת יכול לאפס אותה.'}</p>
+    </form></div>`;
+};
+
+V.admin=()=>{
+  if(!isStaff())return V.denied();
+  const st={published:['b-pub','מפורסם'],draft:['b-draft','טיוטה'],hidden:['b-hidden','מוסתר']};
+  return `<div class="section row"><h1 style="margin:0">ניהול מתכונים</h1><span class="spacer"></span><a class="btn primary" href="#/admin/edit/new">+ מתכון חדש</a></div>
+  <div class="card"><div class="pad" style="padding-bottom:0"><input class="input" id="admq" placeholder="חיפוש בטבלה" style="max-width:320px"></div>
+  <div class="table-wrap pad"><table class="t" id="admt"><thead><tr><th>מתכון</th><th>סוג</th><th>סוג מנה</th><th>סטטוס</th><th>מקור</th><th>עודכן</th><th></th></tr></thead><tbody>
+  ${R.map(r=>`<tr data-title="${esc(r.title)}"><td><a href="#/recipe/${r.slug}"><b>${esc(r.title)}</b></a></td><td>${kb(r.k)}</td><td>${r.dish}</td>
+    <td><span class="badge ${st[r.status][0]}">${st[r.status][1]}</span></td><td>${r.src==='ai'?'<span class="badge b-ai">AI</span>':'מנהל'}</td><td>${r.upd}</td>
+    <td class="row" style="gap:4px;flex-wrap:nowrap"><a class="btn sm" href="#/admin/edit/${r.slug}">עריכה</a><button class="btn sm" data-act="toggle-hide" data-s="${r.slug}">${r.status==='hidden'?'הצג':'הסתר'}</button></td></tr>`).join('')}
+  </tbody></table></div></div>`;
+};
+
+V.adminEdit=(slug)=>{
+  if(!isStaff())return V.denied();
+  const r=slug==='new'?{title:'',desc:'',k:'parve',dish:'עיקרית',prep:10,cook:20,diff:'קל',serv:4,tt:[],diet:[],ings:[['',1,"יח'"]],steps:[['',0,[]]]}:bySlug(slug);
+  if(!r)return V.notfound();
+  const units=["יח'",'גרם','ק"ג','כוס','כוסות','כף','כפות','כפית','כפיות','מ"ל','שיניים','צרור'];
+  return `<div class="section small muted"><a href="#/admin">ניהול מתכונים</a> / ${slug==='new'?'מתכון חדש':esc(r.title)}</div>
+  <form data-form="recipe" class="grid" style="grid-template-columns:1.5fr 1fr;align-items:start" id="edgrid">
+   <div class="grid">
+    <div class="card pad"><h2>פרטי המתכון</h2>
+      <div class="field"><label class="f">שם המתכון</label><input class="input" value="${esc(r.title)}" required></div>
+      <div class="field"><label class="f">תיאור קצר</label><textarea class="input" rows="2">${esc(r.desc)}</textarea></div>
+      <div class="grid g3">
+        <div class="field"><label class="f">סוג (חובה)</label><select class="input">${Object.entries(K).map(([v,l])=>`<option ${r.k===v?'selected':''}>${l}</option>`).join('')}</select></div>
+        <div class="field"><label class="f">סוג מנה</label><select class="input">${DISH.map(x=>`<option ${r.dish===x?'selected':''}>${x}</option>`).join('')}</select></div>
+        <div class="field"><label class="f">רמת קושי</label><select class="input">${['קל','בינוני','מאתגר'].map(x=>`<option ${r.diff===x?'selected':''}>${x}</option>`).join('')}</select></div>
+        <div class="field"><label class="f">הכנה (דק')</label><input class="input" type="number" value="${r.prep}"></div>
+        <div class="field"><label class="f">בישול (דק')</label><input class="input" type="number" value="${r.cook}"></div>
+        <div class="field"><label class="f">מנות</label><input class="input" type="number" value="${r.serv}"></div>
+      </div>
+      <div class="field"><label class="f">תגיות זמן (להמלצות)</label><div class="row">${TIMETAGS.map(x=>`<label class="chip"><input type="checkbox" ${r.tt.includes(x)?'checked':''}> ${x}</label>`).join('')}</div></div>
+      <div class="field"><label class="f">מגבלות תזונה</label><div class="row">${DIET.map(x=>`<label class="chip"><input type="checkbox" ${r.diet.includes(x)?'checked':''}> ${x}</label>`).join('')}</div></div>
+    </div>
+    <div class="card pad"><div class="row"><h2 style="margin:0">רכיבים</h2><span class="spacer"></span><button type="button" class="btn sm" data-act="add-row" data-t="ingrows">+ רכיב</button></div>
+      <datalist id="inglist2">${Object.keys(ING).map(x=>`<option value="${x}">`).join('')}</datalist>
+      <div id="ingrows" style="margin-top:10px">${r.ings.map(([n,q,u])=>`<div class="row" style="margin-bottom:8px;flex-wrap:nowrap"><input class="input" list="inglist2" value="${esc(n)}" placeholder="רכיב (מטבלת הרכיבים)"><input class="input" type="number" step="0.25" value="${q}" style="width:90px"><select class="input" style="width:110px">${units.map(x=>`<option ${x===u?'selected':''}>${x}</option>`).join('')}</select><button type="button" class="btn sm ghost" data-act="del-row">✕</button></div>`).join('')}</div>
+      <p class="small muted">כל רכיב מקושר לטבלת הרכיבים המרכזית. סוג המתכון נבדק מול סוגי הרכיבים.</p></div>
+    <div class="card pad"><div class="row"><h2 style="margin:0">שלבי הכנה</h2><span class="spacer"></span><button type="button" class="btn sm" data-act="add-row" data-t="steprows">+ שלב</button></div>
+      <div id="steprows" style="margin-top:10px">${r.steps.map(([t,s])=>`<div class="row" style="margin-bottom:8px;flex-wrap:nowrap;align-items:flex-start"><textarea class="input" rows="2" placeholder="תיאור השלב">${esc(t)}</textarea><input class="input" type="number" value="${Math.round(s/60)}" style="width:90px" title="טיימר בדקות"><button type="button" class="btn sm ghost" data-act="del-row">✕</button></div>`).join('')}</div>
+      <p class="small muted">המספר ליד כל שלב הוא טיימר בדקות למצב בישול (0 = ללא טיימר).</p></div>
+   </div>
+   <div class="grid">
+    <div class="card pad"><h2>תמונת המתכון</h2>
+      <div class="tabs"><button type="button" class="on" data-act="imgtab" data-t="up">יש לי תמונה</button><button type="button" data-act="imgtab" data-t="gen">צור תמונה</button></div>
+      <div id="img-up">
+        <input type="file" accept="image/jpeg,image/png,image/webp" id="imgfile" class="input">
+        <p class="small muted">JPG / PNG / WebP עד 10MB. התמונה תומר ל-WebP.</p>
+        <div class="imgcompare"><div><div class="small muted">מקור</div><div class="imgbox" id="orig">טרם הועלתה תמונה</div></div>
+          <div><div class="small muted">אחרי עיבוד AI</div><div class="imgbox" id="proc">—</div></div></div>
+        <button type="button" class="btn ai" style="margin-top:10px" data-act="enhance">שפר עם AI</button>
+      </div>
+      <div id="img-gen" hidden>
+        <div class="field"><label class="f">הנחיות לתמונה (אופציונלי)</label><textarea class="input" rows="3" id="imgprompt" placeholder="למשל: צלחת לבנה, תאורה טבעית, צילום מלמעלה. אם ריק, התמונה תיווצר לפי שם המתכון ורכיביו."></textarea></div>
+        <button type="button" class="btn ai" data-act="genimg">צור תמונה</button>
+        <div class="imgbox" id="genbox" style="margin-top:10px">התמונה תופיע כאן</div>
+      </div>
+      <div class="lock" style="margin-top:12px">הנחיית מערכת קבועה: המנה בלבד, ללא דמויות אדם, ידיים או טקסט.</div>
+      <label class="row small" style="margin-top:10px"><input type="checkbox" id="imgok"> אני מאשר/ת את התמונה לפרסום</label>
+      <p class="small muted">ספק: Google Gemini (Imagen) · המקור נשמר ואפשר לחזור אליו.</p>
+    </div>
+    <div class="card pad"><h3>פרסום</h3>
+      <div class="row"><button class="btn" data-act="save-draft" type="button">שמור טיוטה</button><button class="btn primary">פרסם</button><a class="btn ghost" href="#/admin">ביטול</a></div>
+      <p class="small muted" style="margin-top:8px">בשמירה נוצר embedding להמלצות על מתכונים דומים.</p></div>
+   </div>
+  </form><style>@media(max-width:900px){#edgrid{grid-template-columns:1fr!important}}</style>`;
+};
+
+V.system=(tab)=>{
+  if(S.role!=='sysadmin')return V.denied();
+  tab=tab||'users';
+  const T=(k,l)=>`<a class="${tab===k?'on':''}" href="#/system/${k}">${l}</a>`;
+  const RL={sysadmin:'מנהל מערכת',content_manager:'מנהל תוכן',user:'משתמש'};
+  let body='';
+  if(tab==='users')body=`<div class="grid" style="grid-template-columns:1.6fr 1fr;align-items:start" id="sysg">
+    <div class="card table-wrap"><table class="t"><thead><tr><th>שם</th><th>אימייל</th><th>תפקיד</th><th>סטטוס</th><th></th></tr></thead><tbody>
+    ${S.users.map((u,i)=>`<tr><td>${esc(u.name)}</td><td>${esc(u.email)}</td><td>${RL[u.role]}</td><td>${u.active?'<span class="badge b-pub">פעיל</span>':'<span class="badge b-hidden">מושבת</span>'}</td>
+     <td class="row" style="gap:4px;flex-wrap:nowrap">${u.role==='sysadmin'?'<span class="small muted">—</span>':`<button class="btn sm" data-act="u-toggle" data-i="${i}">${u.active?'השבת':'הפעל'}</button><button class="btn sm" data-act="u-reset" data-i="${i}">איפוס סיסמה</button><button class="btn sm danger" data-act="u-del" data-i="${i}">מחק</button>`}</td></tr>`).join('')}
+    </tbody></table></div>
+    <form class="card pad" data-form="new-cm"><h3>יצירת מנהל תוכן</h3>
+      <div class="field"><label class="f">שם</label><input class="input" name="n" required></div>
+      <div class="field"><label class="f">אימייל</label><input class="input" name="e" type="email" required></div>
+      <div class="field"><label class="f">סיסמה זמנית</label><input class="input" name="p" type="text" value="Temp-${Math.random().toString(36).slice(2,8)}"></div>
+      <button class="btn primary">צור חשבון</button></form></div><style>@media(max-width:900px){#sysg{grid-template-columns:1fr!important}}</style>`;
+  if(tab==='settings'){const s=S.settings;body=`<form class="grid g2" data-form="settings">
+    <div class="card pad"><h3>מכסות והגבלות</h3>
+      <div class="field"><label class="f">יצירות ביום – אורח</label><input class="input" type="number" name="qGuest" value="${s.qGuest}"></div>
+      <div class="field"><label class="f">יצירות ביום – משתמש רשום</label><input class="input" type="number" name="qUser" value="${s.qUser}"></div>
+      <div class="field"><label class="f">קריאות AI לדקה (Rate limit)</label><input class="input" type="number" name="rate" value="${s.rate}"></div></div>
+    <div class="card pad"><h3>משקלות ההמלצה</h3>
+      ${[['wSim','דמיון'],['wTime','התאמת זמן'],['wPop','פופולריות']].map(([k,l])=>`<div class="field"><label class="f">${l}: <b id="v-${k}">${s[k]}</b></label><input type="range" min="0" max="1" step="0.05" name="${k}" value="${s[k]}" data-act="w" style="width:100%"></div>`).join('')}
+      <p class="small" id="wsum"></p></div>
+    <div class="card pad"><h3>רכיבי בסיס מותרים ביצירה</h3><textarea class="input" rows="3">${BASIC.join(', ')}</textarea></div>
+    <div class="card pad"><h3>מפתחות API</h3><p class="small muted">המפתחות נשמרים בקובץ .env בשרת ואינם מוצגים כאן.</p><div class="row"><span class="chip">Claude API · מחובר</span><span class="chip">Gemini · מחובר</span></div></div>
+    <div><button class="btn primary">שמירת הגדרות</button></div></form>`}
+  if(tab==='stats'){const F=[['חיפוש חכם',412],["צ'אט עוזר",238],['יצירה חכמה',96],['תמונות',14]],mx=412;body=`
+    <div class="grid g4">${[['קריאות AI היום','760'],['עלות היום','$1.84'],['זמן תגובה ממוצע','2.1 שנ\''],['מתכונים מפורסמים',pub().length]].map(([l,v])=>`<div class="card kpi"><span class="small muted">${l}</span><b>${v}</b></div>`).join('')}</div>
+    <div class="grid g2 section"><div class="card pad"><h3>קריאות AI לפי פיצ'ר (היום)</h3>${F.map(([l,n])=>`<div class="bar"><span class="l">${l}</span><span class="tr"><i style="width:${n/mx*100}%"></i></span><b>${n}</b></div>`).join('')}</div>
+    <div class="card pad"><h3>המתכונים הנצפים ביותר</h3><ol>${[...pub()].sort((a,b)=>b.views-a.views).slice(0,5).map(r=>`<li><a href="#/recipe/${r.slug}">${esc(r.title)}</a> <span class="muted small">· ${r.views} צפיות</span></li>`).join('')}</ol></div></div>`}
+  if(tab==='audit')body=`<div class="card table-wrap"><table class="t"><thead><tr><th>זמן</th><th>משתמש</th><th>פעולה</th><th>ישות</th><th>פרטים</th></tr></thead><tbody>
+    ${[['03/11 10:42','foo@example.com','ai.generate','recipe','mode=ingredients · 1,840 tokens · 6.2s'],['03/11 10:31','baz@example.com','recipe.publish','סלט קינואה וירקות','status: draft → published'],['03/11 10:30','baz@example.com','image.ai_edit','סלט קינואה וירקות','Gemini · אושר'],['03/11 09:58','admin@example.com','user.create','baz@example.com','role=content_manager'],['03/11 09:12','guest:10.0.0.4','ai.search','—','"מנה פרווה מהירה" · 0.9s'],['02/11 22:05','admin@example.com','settings.update','quota','qUser: 15 → 20']].map(a=>`<tr>${a.map((c,i)=>`<td>${i===2?`<code>${c}</code>`:esc(c)}</td>`).join('')}</tr>`).join('')}
+    </tbody></table></div>`;
+  return `<div class="section"><h1>מנהל מערכת</h1></div><div class="tabs">${T('users','משתמשים')}${T('settings','הגדרות')}${T('stats','סטטיסטיקות')}${T('audit','יומן פעולות')}</div>${body}`;
+};
+
+V.screens=()=>{
+  const L=[['#/home','דף הבית','חיפוש חכם, השלמה אוטומטית והמלצות לפי זמן'],['#/search?q=מנה פרווה מהירה','תוצאות חיפוש','פענוח AI למסננים, צ\'יפים ומסננים דינמיים'],['#/search?q=קינוח בשרי ללא גלוטן','חיפוש ללא תוצאות','ריכוך מסננים ומעבר ליצירה'],
+   ['#/recipe/shakshuka-yeruka','עמוד מתכון','מנות, מועדפים, קניות, הדפסה, שיתוף ודומים'],['#/cook/shakshuka-yeruka','מצב בישול','שלב אחר שלב, טיימרים ומסך פעיל'],['#/generate','יצירה חכמה','שלושה מצבים, streaming ותוצאה'],
+   ['#/shopping','רשימת קניות','רשימה מאוחדת לפי קטגוריות'],['#/favorites','מועדפים',''],['#/login','התחברות / הרשמה',''],
+   ['#/admin','ניהול מתכונים','מנהל תוכן'],['#/admin/edit/salat-kinoa','עריכת מתכון','כולל עיבוד ויצירת תמונה'],['#/system/users','מנהל מערכת – משתמשים','יצירת מנהלי תוכן'],
+   ['#/system/settings','מנהל מערכת – הגדרות','מכסות ומשקלות'],['#/system/stats','מנהל מערכת – סטטיסטיקות',''],['#/system/audit','מנהל מערכת – יומן פעולות','']];
+  return `<div class="section"><h1>מפת מסכים</h1><p class="muted">כל המסכים באב-הטיפוס. הצ'אט העוזר זמין מהכפתור הצף בכל מסך. בורר התפקיד בכותרת מדמה הרשאות.</p></div>
+  <div class="grid g3 screen-map">${L.map(([h,t,d])=>`<a href="${h}"><div class="card pad"><b>${t}</b>${d?`<div class="small muted">${d}</div>`:''}</div></a>`).join('')}</div>`;
+};
+V.denied=()=>`<div class="card empty section"><h2 style="color:var(--ink)">אין הרשאה למסך זה</h2><p>החליפו תפקיד בבורר שבכותרת כדי לצפות.</p></div>`;
+V.notfound=()=>`<div class="card empty section"><h2 style="color:var(--ink)">העמוד לא נמצא</h2><a class="btn" href="#/home">לדף הבית</a></div>`;
+
+/* ===================== ניתוב ===================== */
+function nav(){
+  const items=[['home','בית'],['search','חיפוש'],['generate','יצירה חכמה'],['shopping','רשימת קניות'],['favorites','מועדפים']];
+  if(isStaff())items.push(['admin','ניהול תוכן']);
+  if(S.role==='sysadmin')items.push(['system','מנהל מערכת']);
+  if(!isUser())items.push(['login','התחברות']);
+  items.push(['screens','מפת מסכים']);
+  const cur=(location.hash.slice(2).split(/[/?]/)[0])||'home';
+  $('#nav').innerHTML=items.map(([k,l])=>`<a href="#/${k}" class="${cur===k?'active':''}">${l}</a>`).join('');
+}
+let timerIv=null,wakeLock=null;
+function render(){
+  const h=decodeURIComponent(location.hash.slice(1))||'/home';
+  const [path,qs]=h.split('?');const p=path.split('/').filter(Boolean);const q=new URLSearchParams(qs||'');
+  if(p[0]!=='cook'){clearInterval(timerIv);timerIv=null;if(S.cook)S.cook.run=false;if(wakeLock){wakeLock.release().catch(()=>{});wakeLock=null}}
+  let html;
+  switch(p[0]){
+    case 'home':case undefined:html=V.home();break;
+    case 'search':html=V.search(q);break;
+    case 'recipe':html=V.recipe(p[1]);break;
+    case 'cook':html=V.cook(p[1]);break;
+    case 'generate':html=V.generate(q);break;
+    case 'shopping':html=V.shopping();break;
+    case 'favorites':html=V.favorites();break;
+    case 'login':html=V.login(q);break;
+    case 'admin':html=p[1]==='edit'?V.adminEdit(p[2]):V.admin();break;
+    case 'system':html=V.system(p[1]);break;
+    case 'screens':html=V.screens();break;
+    default:html=V.notfound();
+  }
+  $('#app').innerHTML=html;nav();$('#nav').classList.remove('open');
+  after(p);
+}
+function after(p){
+  if(p[0]==='cook'&&'wakeLock' in navigator&&!wakeLock){navigator.wakeLock.request('screen').then(w=>wakeLock=w).catch(()=>{const e=$('#wl');if(e)e.textContent=''})}
+  if(p[0]==='cook'){let x0=null;const el=$('#swipe');el.addEventListener('touchstart',e=>x0=e.touches[0].clientX);el.addEventListener('touchend',e=>{if(x0==null)return;const dx=e.changedTouches[0].clientX-x0;if(Math.abs(dx)>60)step(dx>0?1:-1);x0=null})}
+  if(p[0]==='admin'&&!p[1]){$('#admq').addEventListener('input',e=>{document.querySelectorAll('#admt tbody tr').forEach(tr=>tr.hidden=!tr.dataset.title.includes(e.target.value))})}
+  if(p[0]==='admin'&&p[1]==='edit'){$('#imgfile').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{$('#orig').innerHTML=`<img src="${rd.result}" alt="תמונה מקורית">`;$('#orig').dataset.src=rd.result};rd.readAsDataURL(f)})}
+  if(p[0]==='system'&&p[1]==='settings')wsum();
+  if(p[0]==='generate'){const i=$('#ingin');if(i)i.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();const v=i.value.trim();if(v&&!S.gen.ings.includes(v)){S.gen.ings.push(v);render();$('#ingin').focus()}}})}
+  window.scrollTo(0,0);
+}
+function wsum(){const f=document.querySelector('[data-form=settings]');const s=['wSim','wTime','wPop'].reduce((a,k)=>a+ +f[k].value,0);$('#wsum').innerHTML=Math.abs(s-1)<0.001?'<span style="color:var(--ok)">סכום המשקלות: 1.0</span>':`<span style="color:var(--meat)">סכום המשקלות ${s.toFixed(2)} – צריך להיות 1.0</span>`}
+function step(d){const r=bySlug(S.cook.slug);const i=Math.min(Math.max(S.cook.i+d,0),r.steps.length-1);clearInterval(timerIv);timerIv=null;S.cook={slug:r.slug,i,left:r.steps[i][1],run:false};render()}
+function beep(){try{const a=new (window.AudioContext||window.webkitAudioContext)();[0,0.35,0.7].forEach(t=>{const o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=880;g.gain.value=.2;o.start(a.currentTime+t);o.stop(a.currentTime+t+.2)})}catch(e){}}
+
+/* ===================== אירועים ===================== */
+document.addEventListener('click',e=>{
+  const a=e.target.closest('[data-act]');if(!a)return;
+  const act=a.dataset.act;
+  if(['set-filter','w','shop-check'].includes(act))return;
+  const hashQ=()=>new URLSearchParams((location.hash.split('?')[1])||'');
+  switch(act){
+    case 'menu':$('#nav').classList.toggle('open');break;
+    case 'rm-filter':{const q=hashQ();q.delete(a.dataset.k);q.set('x','1');location.hash='#/search?'+q.toString();break}
+    case 'fav':{const s=a.dataset.s;S.fav.has(s)?S.fav.delete(s):S.fav.add(s);toast(S.fav.has(s)?'נוסף למועדפים':'הוסר מהמועדפים');render();break}
+    case 'to-shop':{const r=bySlug(a.dataset.s);addToShop(r,S.servings[r.slug]);toast('הרכיבים נוספו לרשימת הקניות');break}
+    case 'serv':{const r=bySlug(a.dataset.s);S.servings[r.slug]=Math.max(1,(S.servings[r.slug]||r.serv)+ +a.dataset.d);render();break}
+    case 'print':window.print();break;
+    case 'share':{const u=location.href;(navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast('הקישור הועתק')).catch(()=>toast('קישור לשיתוף: '+u));break}
+    case 'step':step(+a.dataset.d);break;
+    case 'timer':{const c=S.cook;if(c.run){clearInterval(timerIv);timerIv=null;c.run=false;a.textContent='הפעל'}else{if(c.left<=0)return;c.run=true;a.textContent='השהה';timerIv=setInterval(()=>{c.left--;const t=$('#tm');if(t)t.textContent=String(Math.floor(c.left/60)).padStart(2,'0')+':'+String(c.left%60).padStart(2,'0');if(c.left<=0){clearInterval(timerIv);timerIv=null;c.run=false;beep();toast('הטיימר הסתיים');render()}},1000)}break}
+    case 'timer-reset':{const r=bySlug(S.cook.slug);clearInterval(timerIv);timerIv=null;S.cook.left=r.steps[S.cook.i][1];S.cook.run=false;render();break}
+    case 'gmode':S.gen.mode=a.dataset.m;S.gen.result=null;render();break;
+    case 'ing-rm':S.gen.ings.splice(+a.dataset.i,1);render();break;
+    case 'gen':case 'gen-again':{
+      const quota=S.role==='guest'?S.settings.qGuest:S.settings.qUser;
+      if(S.used>=quota){toast('הגעתם למכסת היצירות היומית');break}
+      if(act==='gen-again')S.gen.variant++;
+      const res=mockGen();S.used++;
+      const out=$('#genout');out.innerHTML='<div class="stream" id="st"></div>';
+      const lines=['מפענח את הבקשה…',`מצב: ${({ingredients:'מהרכיבים',free:'תיאור חופשי',adapt:'התאמת מתכון'})[S.gen.mode]}`,`כותרת: ${res.title}`,...res.ings.map(i=>`• ${i[0]} – ${fmt(i[1])} ${i[2]}`),...res.steps.map((s,i)=>`${i+1}. ${s}`),'בודק ערבוב בשר וחלב…','ולידציה מול JSON Schema… תקין'];
+      let i=0;const iv=setInterval(()=>{const st=$('#st');if(!st){clearInterval(iv);return}st.textContent+=lines[i]+'\n';i++;if(i>=lines.length){clearInterval(iv);setTimeout(()=>{S.gen.result=res;const o=$('#genout');if(o){o.innerHTML=resultCard(res);const q=document.querySelector('#gengrid .small.muted');if(q)q.textContent=`נותרו ${Math.max(quota-S.used,0)} מתוך ${quota} יצירות היום`}},350)}},140);
+      break}
+    case 'gen-save':if(!isUser()){toast('יש להתחבר כדי לשמור מתכונים');setTimeout(()=>location.hash='#/login',900)}else toast('המתכון נשמר לאוסף האישי (טיוטה)');break;
+    case 'shop-rm':e.preventDefault();S.shop.splice(+a.dataset.i,1);render();break;
+    case 'clear-shop':if(confirm('לנקות את כל רשימת הקניות?')){S.shop=[];render()}break;
+    case 'copy-shop':{const t=S.shop.filter(i=>!i.done).map(i=>`${i.n} – ${fmt(i.q)} ${i.u}`).join('\n');(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('הרשימה הועתקה')).catch(()=>alert(t));break}
+    case 'toggle-hide':{const r=bySlug(a.dataset.s);r.status=r.status==='hidden'?'published':'hidden';render();toast(r.status==='hidden'?'המתכון הוסתר':'המתכון מוצג');break}
+    case 'add-row':{const box=$('#'+a.dataset.t);const last=box.lastElementChild.cloneNode(true);last.querySelectorAll('input,textarea').forEach(x=>{x.value=x.type==='number'?(a.dataset.t==='ingrows'?1:0):''});box.appendChild(last);break}
+    case 'del-row':{const box=a.closest('[id$=rows]');if(box.children.length>1)a.parentElement.remove();break}
+    case 'imgtab':document.querySelectorAll('[data-act=imgtab]').forEach(b=>b.classList.toggle('on',b===a));$('#img-up').hidden=a.dataset.t!=='up';$('#img-gen').hidden=a.dataset.t!=='gen';break;
+    case 'enhance':{const src=$('#orig').dataset.src;if(!src){toast('העלו קודם תמונה');break}$('#proc').textContent='מעבד…';setTimeout(()=>{$('#proc').innerHTML=`<img class="enhanced" src="${src}" alt="תמונה מעובדת">`;toast('התמונה עובדה – נא לאשר')},1200);break}
+    case 'genimg':{$('#genbox').textContent='יוצר תמונה…';setTimeout(()=>{$('#genbox').innerHTML=art({hue:30},'').replace('class="art ','class="art wide ');toast('התמונה נוצרה (תצוגת דמה) – נא לאשר')},1300);break}
+    case 'save-draft':toast('נשמר כטיוטה');break;
+    case 'u-toggle':{const u=S.users[+a.dataset.i];u.active=!u.active;render();break}
+    case 'u-reset':toast('נוצרה סיסמה זמנית חדשה');break;
+    case 'u-del':if(confirm('למחוק את המשתמש?')){S.users.splice(+a.dataset.i,1);render()}break;
+    case 'chat-toggle':{const c=$('#chat');c.classList.toggle('open');if(c.classList.contains('open')){if(!$('#msgs').children.length)bot('שלום! ספרו לי מה בא לכם לבשל, ואמצא מתכון מתאים מהאתר.');c.querySelector('input').focus()}break}
+  }
+});
+document.addEventListener('change',e=>{
+  const a=e.target;
+  if(a.dataset.act==='set-filter'){const q=new URLSearchParams((location.hash.split('?')[1])||'');a.value?q.set(a.dataset.k,a.value):q.delete(a.dataset.k);q.set('x','1');location.hash='#/search?'+q.toString()}
+  if(a.dataset.act==='shop-check'){S.shop[+a.dataset.i].done=a.checked;render()}
+});
+document.addEventListener('input',e=>{
+  const a=e.target;
+  if(a.dataset.act==='w'){$('#v-'+a.name).textContent=a.value;wsum()}
+  if(a.classList.contains('ac')){clearTimeout(a._t);a._t=setTimeout(()=>suggest(a),200)}
+});
+document.addEventListener('click',e=>{if(!e.target.closest('.search'))document.querySelectorAll('.ac-list').forEach(l=>l.hidden=true)});
+function suggest(inp){
+  const v=inp.value.trim(),box=inp.parentElement.querySelector('.ac-list');
+  if(v.length<1){box.hidden=true;return}
+  const out=[];
+  pub().filter(r=>r.title.includes(v)).forEach(r=>out.push([`#/recipe/${r.slug}`,r.title,'מתכון']));
+  Object.keys(ING).filter(n=>n.includes(v)).forEach(n=>out.push([`#/search?w=${encodeURIComponent(n)}`,n,'רכיב']));
+  DISH.filter(d=>d.includes(v)).forEach(d=>out.push([`#/search?d=${d}`,d,'סוג מנה']));
+  Object.entries(K).filter(([,l])=>l.includes(v)).forEach(([k,l])=>out.push([`#/search?k=${k}`,l,'סוג']));
+  box.innerHTML=out.slice(0,8).map(([h,t,c])=>`<a href="${h}"><span>${esc(t)}</span><span class="small muted">${c}</span></a>`).join('');
+  box.hidden=!out.length;
+}
+document.addEventListener('submit',e=>{
+  e.preventDefault();const f=e.target;
+  switch(f.dataset.form){
+    case 'search':{const t=f.q.value.trim();const p=parseQuery(t);const q=new URLSearchParams({q:t,...p,x:'1'});location.hash='#/search?'+q.toString();break}
+    case 'login':S.role='user';$('#role').value='user';toast('התחברתם בהצלחה');location.hash='#/home';break;
+    case 'recipe':toast('המתכון פורסם');setTimeout(()=>location.hash='#/admin',700);break;
+    case 'new-cm':S.users.push({name:f.n.value,email:f.e.value,role:'content_manager',active:true});toast('חשבון מנהל תוכן נוצר');render();break;
+    case 'settings':['qGuest','qUser','rate','wSim','wTime','wPop'].forEach(k=>S.settings[k]=+f[k].value);toast('ההגדרות נשמרו');break;
+    case 'chat':{const m=f.m.value.trim();if(!m)return;f.m.value='';me(m);setTimeout(()=>reply(m),500);break}
+  }
+});
+$('#role').addEventListener('change',e=>{S.role=e.target.value;render();toast('תפקיד מודגם: '+e.target.selectedOptions[0].text)});
+
+/* ===================== צ'אט עוזר (מדומה) ===================== */
+function me(t){$('#msgs').insertAdjacentHTML('beforeend',`<div class="msg me">${esc(t)}</div>`);scrollChat()}
+function bot(h){$('#msgs').insertAdjacentHTML('beforeend',`<div class="msg bot">${h}</div>`);scrollChat()}
+function scrollChat(){const m=$('#msgs');m.scrollTop=m.scrollHeight}
+function reply(m){
+  const p=parseQuery(m);
+  if(!Object.keys(p).length&&!S.chatAsked&&m.split(/\s+/).length<3){S.chatAsked=true;bot('כדי לדייק: לאיזו ארוחה – בוקר, צהריים או ערב? ויש העדפה לבשרי, חלבי או פרווה?');return}
+  let res=filterR(p);
+  if(/בוקר/.test(m))res=res.filter(r=>r.tt.includes('בוקר'));
+  else if(/צהריים/.test(m))res=res.filter(r=>r.tt.includes('צהריים'));
+  else if(/ערב/.test(m))res=res.filter(r=>r.tt.includes('ערב'));
+  res=res.slice(0,3);
+  if(!res.length){bot(`לא מצאתי מתכון מתאים באתר.<br><a class="btn sm ai" style="margin-top:8px" href="#/generate?mode=free&text=${encodeURIComponent(m)}">צור לי מתכון חדש</a>`);return}
+  bot(`${res.length===1?'מצאתי מתכון אחד מתאים':'מצאתי '+res.length+' מתכונים מתאימים'}:`+res.map(r=>`<a class="mini" href="#/recipe/${r.slug}">${art(r)}<span><b>${esc(r.title)}</b><br><span class="small muted">${K[r.k]} · ${mins(r.prep+r.cook)}</span></span></a>`).join(''));
+}
+
+window.addEventListener('hashchange',render);
+if(!location.hash)location.hash='#/home';else render();
+</script>
+</body>
+</html>
