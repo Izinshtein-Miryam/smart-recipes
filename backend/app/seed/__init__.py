@@ -7,15 +7,9 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.domain.kosher import derive_recipe_kosher_type
-from app.models import (
-    Ingredient,
-    KosherType,
-    Recipe,
-    RecipeIngredient,
-    RecipeStatus,
-    RecipeStep,
-)
+from app.models import Ingredient, Recipe, RecipeStatus
+from app.services.embeddings.provider import EmbeddingProvider, MockEmbeddingProvider
+from app.services.recipe_writer import IngredientLineIn, StepIn, set_content
 
 
 def load_seed_data() -> dict[str, Any]:
@@ -24,8 +18,9 @@ def load_seed_data() -> dict[str, Any]:
     return data
 
 
-def seed(db: Session) -> int:
+def seed(db: Session, embedder: EmbeddingProvider | None = None) -> int:
     """Insert seed data idempotently. Returns the number of recipes created."""
+    embedder = embedder or MockEmbeddingProvider()
     data = load_seed_data()
     by_name: dict[str, Ingredient] = {i.name: i for i in db.scalars(select(Ingredient))}
     for item in data["ingredients"]:
@@ -41,16 +36,14 @@ def seed(db: Session) -> int:
             continue
         lines = r.pop("ingredients")
         steps = r.pop("steps")
-        kosher = derive_recipe_kosher_type(KosherType(by_name[n].kosher_type) for n, _, _ in lines)
-        recipe = Recipe(**r, kosher_type=kosher, status=RecipeStatus.PUBLISHED)
-        recipe.ingredients = [
-            RecipeIngredient(ingredient_id=by_name[n].id, quantity=q, unit=u, order=i)
-            for i, (n, q, u) in enumerate(lines)
-        ]
-        recipe.steps = [
-            RecipeStep(order=i + 1, text=t, timer_seconds=s, ingredient_ids=[])
-            for i, (t, s) in enumerate(steps)
-        ]
+        recipe = Recipe(**r, status=RecipeStatus.PUBLISHED)
+        set_content(
+            db,
+            recipe,
+            [IngredientLineIn(by_name[n].id, q, u) for n, q, u in lines],
+            [StepIn(t, s) for t, s in steps],
+            embedder,
+        )
         db.add(recipe)
         created += 1
     db.commit()

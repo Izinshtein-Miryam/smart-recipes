@@ -55,3 +55,19 @@ def test_get_missing_recipe(client: TestClient) -> None:
 
 def test_seed_is_idempotent(seeded_db: Session) -> None:
     assert seed(seeded_db) == 0
+
+
+def test_list_ingredient_and_diet_filters(client: TestClient) -> None:
+    assert client.get("/api/recipes", params={"include": "בצל"}).json()["total"] == 2
+    assert client.get("/api/recipes", params={"exclude": "בצל"}).json()["total"] == 1
+    assert client.get("/api/recipes", params={"diet": "sugar_free"}).json()["total"] == 1
+    assert client.get("/api/recipes", params={"q": "תרד"}).json()["total"] == 1  # by ingredient
+
+
+def test_view_count_increments(client: TestClient, seeded_db: Session) -> None:
+    client.get("/api/recipes/salat-kinoa")
+    client.get("/api/recipes/salat-kinoa")
+    recipe = seeded_db.query(Recipe).filter_by(slug="salat-kinoa").one()
+    assert recipe.view_count == 2
+    # Popular recipes come first in the catalog.
+    assert client.get("/api/recipes").json()["items"][0]["slug"] == "salat-kinoa"

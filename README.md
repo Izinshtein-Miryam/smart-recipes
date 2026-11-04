@@ -105,8 +105,30 @@ cd backend
 .venv/bin/alembic upgrade head
 ```
 
+## API
+
+התיעוד המלא, כולל דוגמאות, נמצא ב-`/docs`. סיכום הנתיבים:
+
+| נתיב | תיאור | הרשאה |
+| --- | --- | --- |
+| `GET /api/recipes` | קטלוג עם מסננים (`kosher_type`, `dish_type`, `difficulty`, `max_minutes`, `q`, `include`, `exclude`, `diet`) ועימוד | כולם |
+| `GET /api/recipes/{slug}?servings=` | מתכון מלא עם חישוב כמויות. טיוטות גלויות רק לבעלים ולמנהלי תוכן | כולם |
+| `GET /api/recipes/{id}/similar` | 4 מתכונים דומים מאותו סוג (`any_type=true` לביטול) | כולם |
+| `GET /api/recommendations/home` | מובחר ועוד 4 לפי הקשר זמן | כולם |
+| `GET /api/search/suggest?q=` | השלמה אוטומטית מקומית (עד 8) | כולם |
+| `POST /api/search/smart` | משפט חופשי ← מסננים, תוצאות והצעות ריכוך. בלי AI עובר לחיפוש טקסט | כולם |
+| `POST /api/assistant/chat` | צ'אט עוזר (SSE): `delta`, `recipes`, `done` / `error` | כולם |
+| `POST /api/generate` | יצירה חכמה (SSE): `attempt`, `delta`, `retry`, `done` / `error` | כולם, עם מכסה |
+| `POST /api/generate/{id}/save` | שמירת מתכון שנוצר כטיוטה אישית | רשום |
+| `GET /api/ingredients?q=` | חיפוש בטבלת הרכיבים | כולם |
+| `/api/auth/*`, `PATCH /api/me`, `GET /api/me/recipes` | חשבון, פרופיל ומגבלות תזונה, המתכונים שלי | — / רשום |
+| `/api/favorites`, `/api/shopping-list` | מועדפים ורשימת קניות מאוחדת | רשום |
+| `/api/admin/recipes`, `/api/admin/ingredients` | ניהול מתכונים ורכיבים | מנהל תוכן |
+| `/api/admin/recipes/{id}/images`, `/api/admin/images/{id}/approve` | העלאה, שיפור או יצירה של תמונה, ואישור | מנהל תוכן |
+| `/api/system/users`, `/settings`, `/stats`, `/audit` | ניהול מערכת | מנהל מערכת |
+
+נתיבי ה-AI מוגבלים ל-10 קריאות בדקה למשתמש או IP (ניתן לשינוי בהגדרות). כל קריאה ל-Claude נרשמת בטבלת `ai_calls`.
+
 ## מצב נוכחי
 
-מומש: מודל הנתונים המלא, הרשמה/התחברות/הרשאות לפי תפקיד, קטלוג (רשימה עם מסננים ועימוד, מתכון עם חישוב מנות), שכבות ה-AI עם מימושי mock, שלד הממשק עם כל הנתיבים מאב-הטיפוס.
-
-הבא בתור: שאר נתיבי ה-API (ראו `backend/app/api/routes/placeholders.py`), מסכי הממשק (`frontend/src/pages/placeholders.tsx`), והרחבת קובץ ה-seed ל-~50 מתכונים.
+ה-Backend ממומש לפי האפיון. הבא בתור: מסכי הממשק (`frontend/src/pages/placeholders.tsx`) והרחבת קובץ ה-seed ל-~50 מתכונים.

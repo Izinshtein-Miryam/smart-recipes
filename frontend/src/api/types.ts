@@ -16,6 +16,7 @@ export interface RecipeCard {
   total_minutes: number;
   diet_tags: string[];
   source: 'admin' | 'ai';
+  image_url: string | null;
 }
 
 export interface IngredientLine {
@@ -37,7 +38,9 @@ export interface RecipeDetail extends RecipeCard {
   prep_minutes: number;
   cook_minutes: number;
   servings: number;
+  base_servings: number;
   time_tags: string[];
+  status: 'draft' | 'published' | 'hidden';
   ingredients: IngredientLine[];
   steps: Step[];
   created_at: string;

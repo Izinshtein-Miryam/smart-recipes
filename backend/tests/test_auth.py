@@ -69,11 +69,12 @@ def test_role_guards(client: TestClient, seeded_db: Session) -> None:
     assert client.get("/api/system/users").status_code == 401
 
     login(client, "user@example.com")
-    assert client.post("/api/admin/recipes").status_code == 403
+    assert client.get("/api/admin/recipes").status_code == 403
 
     login(client, "cm@example.com")
-    assert client.post("/api/admin/recipes").status_code == 501  # allowed, not implemented
+    assert client.get("/api/admin/recipes").status_code == 200
     assert client.get("/api/system/users").status_code == 403
 
     login(client, "sys@example.com")
-    assert client.get("/api/system/users").status_code == 501
+    assert client.get("/api/system/users").status_code == 200
+    assert client.get("/api/admin/recipes").status_code == 200

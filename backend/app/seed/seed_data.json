@@ -1,37 +1,234 @@
 {
-  "ingredients": [
-    {"name": "ביצים", "category": "ביצים", "kosher_type": "parve", "default_unit": "יחידות"},
-    {"name": "עגבניות", "category": "ירקות", "kosher_type": "parve", "default_unit": "יחידות"},
-    {"name": "בצל", "category": "ירקות", "kosher_type": "parve", "default_unit": "יחידות"},
-    {"name": "תרד", "category": "ירקות", "kosher_type": "parve", "default_unit": "גרם"},
-    {"name": "גבינה בולגרית", "category": "מוצרי חלב", "kosher_type": "dairy", "default_unit": "גרם"},
-    {"name": "חזה עוף", "category": "בשר", "kosher_type": "meat", "default_unit": "גרם"},
-    {"name": "קינואה", "category": "מזווה", "kosher_type": "parve", "default_unit": "כוס"},
-    {"name": "מלח", "category": "תבלינים", "kosher_type": "parve", "is_basic": true, "default_unit": "כפית"},
-    {"name": "פלפל שחור", "category": "תבלינים", "kosher_type": "parve", "is_basic": true, "default_unit": "כפית"},
-    {"name": "שמן זית", "category": "מזווה", "kosher_type": "parve", "is_basic": true, "default_unit": "כף"}
-  ],
-  "recipes": [
-    {
-      "title": "שקשוקה ירוקה", "slug": "shakshuka-yeruka", "description": "שקשוקה עם תרד וגבינה בולגרית",
-      "dish_type": "main", "difficulty": "easy", "prep_minutes": 10, "cook_minutes": 15, "servings": 2,
-      "time_tags": ["morning"], "diet_tags": ["gluten_free"],
-      "ingredients": [["ביצים", 4, "יחידות"], ["תרד", 200, "גרם"], ["בצל", 1, "יחידות"], ["גבינה בולגרית", 100, "גרם"], ["שמן זית", 2, "כף"], ["מלח", 0.5, "כפית"]],
-      "steps": [["מטגנים את הבצל בשמן עד שהוא מזהיב.", 300], ["מוסיפים את התרד ומבשלים עד שהוא נובל.", 180], ["שוברים את הביצים, מפזרים גבינה ומכסים.", 420]]
-    },
-    {
-      "title": "סלט קינואה", "slug": "salat-kinoa", "description": "סלט קינואה עם ירקות טריים",
-      "dish_type": "side", "difficulty": "easy", "prep_minutes": 15, "cook_minutes": 15, "servings": 4,
-      "time_tags": ["noon", "make_ahead"], "diet_tags": ["gluten_free", "sugar_free"],
-      "ingredients": [["קינואה", 1, "כוס"], ["עגבניות", 2, "יחידות"], ["בצל", 0.5, "יחידות"], ["שמן זית", 3, "כף"], ["מלח", 1, "כפית"]],
-      "steps": [["מבשלים את הקינואה ומצננים.", 900], ["קוצצים את הירקות ומערבבים עם הקינואה והתיבול.", null]]
-    },
-    {
-      "title": "חזה עוף בתנור", "slug": "chaze-of-batanur", "description": "חזה עוף עסיסי בתיבול פשוט",
-      "dish_type": "main", "difficulty": "medium", "prep_minutes": 10, "cook_minutes": 25, "servings": 4,
-      "time_tags": ["evening"], "diet_tags": ["gluten_free"],
-      "ingredients": [["חזה עוף", 600, "גרם"], ["שמן זית", 2, "כף"], ["מלח", 1, "כפית"], ["פלפל שחור", 0.5, "כפית"]],
-      "steps": [["מתבלים את העוף בשמן, מלח ופלפל.", null], ["אופים בתנור שחומם ל-200 מעלות.", 1500]]
-    }
-  ]
+ "ingredients": [
+  {
+   "name": "ביצים",
+   "category": "ביצים",
+   "kosher_type": "parve",
+   "default_unit": "יחידות"
+  },
+  {
+   "name": "עגבניות",
+   "category": "ירקות",
+   "kosher_type": "parve",
+   "default_unit": "יחידות"
+  },
+  {
+   "name": "בצל",
+   "category": "ירקות",
+   "kosher_type": "parve",
+   "default_unit": "יחידות"
+  },
+  {
+   "name": "תרד",
+   "category": "ירקות",
+   "kosher_type": "parve",
+   "default_unit": "גרם"
+  },
+  {
+   "name": "גבינה בולגרית",
+   "category": "מוצרי חלב",
+   "kosher_type": "dairy",
+   "default_unit": "גרם"
+  },
+  {
+   "name": "חזה עוף",
+   "category": "בשר",
+   "kosher_type": "meat",
+   "default_unit": "גרם"
+  },
+  {
+   "name": "קינואה",
+   "category": "מזווה",
+   "kosher_type": "parve",
+   "default_unit": "כוס"
+  },
+  {
+   "name": "מלח",
+   "category": "תבלינים",
+   "kosher_type": "parve",
+   "is_basic": true,
+   "default_unit": "כפית"
+  },
+  {
+   "name": "פלפל שחור",
+   "category": "תבלינים",
+   "kosher_type": "parve",
+   "is_basic": true,
+   "default_unit": "כפית"
+  },
+  {
+   "name": "שמן זית",
+   "category": "מזווה",
+   "kosher_type": "parve",
+   "is_basic": true,
+   "default_unit": "כף"
+  }
+ ],
+ "recipes": [
+  {
+   "title": "שקשוקה ירוקה",
+   "slug": "shakshuka-yeruka",
+   "description": "שקשוקה עם תרד וגבינה בולגרית",
+   "dish_type": "main",
+   "difficulty": "easy",
+   "prep_minutes": 10,
+   "cook_minutes": 15,
+   "servings": 2,
+   "time_tags": [
+    "morning"
+   ],
+   "diet_tags": [
+    "gluten_free"
+   ],
+   "ingredients": [
+    [
+     "ביצים",
+     4,
+     "יחידות"
+    ],
+    [
+     "תרד",
+     200,
+     "גרם"
+    ],
+    [
+     "בצל",
+     1,
+     "יחידות"
+    ],
+    [
+     "גבינה בולגרית",
+     100,
+     "גרם"
+    ],
+    [
+     "שמן זית",
+     2,
+     "כף"
+    ],
+    [
+     "מלח",
+     0.5,
+     "כפית"
+    ]
+   ],
+   "steps": [
+    [
+     "מטגנים את הבצל בשמן עד שהוא מזהיב.",
+     300
+    ],
+    [
+     "מוסיפים את התרד ומבשלים עד שהוא נובל.",
+     180
+    ],
+    [
+     "שוברים את הביצים, מפזרים גבינה ומכסים.",
+     420
+    ]
+   ]
+  },
+  {
+   "title": "סלט קינואה",
+   "slug": "salat-kinoa",
+   "description": "סלט קינואה עם ירקות טריים",
+   "dish_type": "side",
+   "difficulty": "easy",
+   "prep_minutes": 15,
+   "cook_minutes": 15,
+   "servings": 4,
+   "time_tags": [
+    "noon",
+    "make_ahead"
+   ],
+   "diet_tags": [
+    "gluten_free",
+    "sugar_free"
+   ],
+   "ingredients": [
+    [
+     "קינואה",
+     1,
+     "כוס"
+    ],
+    [
+     "עגבניות",
+     2,
+     "יחידות"
+    ],
+    [
+     "בצל",
+     0.5,
+     "יחידות"
+    ],
+    [
+     "שמן זית",
+     3,
+     "כף"
+    ],
+    [
+     "מלח",
+     1,
+     "כפית"
+    ]
+   ],
+   "steps": [
+    [
+     "מבשלים את הקינואה ומצננים.",
+     900
+    ],
+    [
+     "קוצצים את הירקות ומערבבים עם הקינואה והתיבול.",
+     null
+    ]
+   ]
+  },
+  {
+   "title": "חזה עוף בתנור",
+   "slug": "chaze-of-batanur",
+   "description": "חזה עוף עסיסי בתיבול פשוט",
+   "dish_type": "main",
+   "difficulty": "medium",
+   "prep_minutes": 10,
+   "cook_minutes": 25,
+   "servings": 4,
+   "time_tags": [
+    "evening"
+   ],
+   "diet_tags": [
+    "gluten_free"
+   ],
+   "ingredients": [
+    [
+     "חזה עוף",
+     600,
+     "גרם"
+    ],
+    [
+     "שמן זית",
+     2,
+     "כף"
+    ],
+    [
+     "מלח",
+     1,
+     "כפית"
+    ],
+    [
+     "פלפל שחור",
+     0.5,
+     "כפית"
+    ]
+   ],
+   "steps": [
+    [
+     "מתבלים את העוף בשמן, מלח ופלפל.",
+     null
+    ],
+    [
+     "אופים בתנור שחומם ל-200 מעלות.",
+     1500
+    ]
+   ]
+  }
+ ]
 }

@@ -9,7 +9,7 @@ from app.config import get_settings
 
 
 def hash_password(password: str) -> str:
-    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt(rounds=get_settings().bcrypt_rounds)).decode()
 
 
 def verify_password(password: str, password_hash: str) -> bool:

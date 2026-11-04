@@ -70,6 +70,14 @@ class Recipe(Base):
     def total_minutes(self) -> int:
         return self.prep_minutes + self.cook_minutes
 
+    @property
+    def image_url(self) -> str | None:
+        """URL of the approved primary image, or None (AI recipes are shown with an icon)."""
+        for image in self.images:
+            if image.is_primary and image.approved:
+                return image.url
+        return None
+
 
 class RecipeIngredient(Base):
     __tablename__ = "recipe_ingredients"
@@ -110,5 +118,17 @@ class RecipeImage(Base):
     prompt: Mapped[str | None] = mapped_column(Text)
     is_primary: Mapped[bool] = mapped_column(Boolean, default=False)
     approved: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Which version is shown: the processed one (default) or the original upload.
+    use_original: Mapped[bool] = mapped_column(Boolean, default=False)
 
     recipe: Mapped[Recipe] = relationship(back_populates="images")
+
+    @property
+    def selected_path(self) -> str | None:
+        if self.use_original or self.processed_path is None:
+            return self.original_path
+        return self.processed_path
+
+    @property
+    def url(self) -> str | None:
+        return f"/media/{self.selected_path}" if self.selected_path else None

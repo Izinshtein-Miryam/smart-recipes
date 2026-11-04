@@ -14,7 +14,6 @@ dependencies = [
   "pyjwt>=2.10",
   "bcrypt>=4.2",
   "python-multipart>=0.0.17",
-  "sse-starlette>=2.1",
   "anthropic>=0.40",
   "pillow>=11.0",
 ]
@@ -69,4 +68,4 @@ testpaths = ["tests"]
 addopts = "--cov=app --cov-report=term-missing --cov-fail-under=70"
 
 [tool.coverage.run]
-omit = ["app/cli.py", "app/services/images/gemini.py", "app/services/embeddings/sentence.py"]
+omit = ["app/cli.py", "app/services/ai/anthropic_client.py", "app/services/images/gemini.py", "app/services/embeddings/sentence.py"]

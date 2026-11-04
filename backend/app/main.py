@@ -4,7 +4,22 @@ from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routes import auth, health, placeholders, recipes
+from app.api.routes import (
+    admin_images,
+    admin_recipes,
+    assistant,
+    auth,
+    favorites,
+    generate,
+    health,
+    ingredients,
+    me,
+    recipes,
+    recommendations,
+    search,
+    shopping,
+    system,
+)
 from app.config import get_settings
 
 
@@ -24,8 +39,24 @@ def create_app() -> FastAPI:
     )
 
     api = APIRouter(prefix="/api")
-    for router in (health.router, auth.router, recipes.router, *placeholders.routers):
-        api.include_router(router)
+    routers = (
+        health,
+        auth,
+        me,
+        recommendations,  # before recipes: /recipes/{id}/similar
+        recipes,
+        ingredients,
+        search,
+        assistant,
+        generate,
+        favorites,
+        shopping,
+        admin_recipes,
+        admin_images,
+        system,
+    )
+    for module in routers:
+        api.include_router(module.router)
     app.include_router(api)
 
     settings.media_dir.mkdir(parents=True, exist_ok=True)

@@ -1,10 +1,18 @@
-"""LLM client abstraction with Anthropic and mock implementations."""
+"""LLM client abstraction. The real implementation lives in `anthropic_client.py`."""
 
-from collections.abc import AsyncIterator
-from dataclasses import dataclass
-from typing import Protocol
+from collections.abc import AsyncIterator, Callable, Sequence
+from dataclasses import dataclass, field
+from typing import Any, Literal, Protocol, TypedDict
 
 from app.config import Settings
+
+Effort = Literal["low", "medium", "high"]
+JsonSchema = dict[str, Any]
+
+
+class ChatMessage(TypedDict):
+    role: Literal["user", "assistant"]
+    content: str
 
 
 @dataclass(frozen=True)
@@ -15,59 +23,81 @@ class LLMResult:
     output_tokens: int
 
 
+class LLMError(Exception):
+    """Base error for LLM calls. The message is safe to show to users."""
+
+
+class LLMUnavailableError(LLMError):
+    """The provider is not configured, unreachable, timed out or rate limited."""
+
+
+class LLMRefusalError(LLMError):
+    """The model declined the request."""
+
+
 class LLMClient(Protocol):
     model: str
 
-    async def complete(self, system: str, user: str, max_tokens: int = 2048) -> LLMResult: ...
+    def stream(
+        self,
+        *,
+        system: str,
+        messages: Sequence[ChatMessage],
+        json_schema: JsonSchema | None = None,
+        effort: Effort = "low",
+        max_tokens: int = 4000,
+    ) -> AsyncIterator[str | LLMResult]:
+        """Yield text chunks, then exactly one final `LLMResult`."""
+        ...
 
-    def stream(self, system: str, user: str, max_tokens: int = 2048) -> AsyncIterator[str]: ...
+
+Responder = Callable[[str, Sequence[ChatMessage]], str]
 
 
+@dataclass
 class MockLLMClient:
-    """Deterministic client for development and tests."""
+    """Scripted client for tests and for running without an API key.
 
-    def __init__(self, response: str = "{}") -> None:
-        self.model = "mock"
-        self.response = response
+    `responses` are returned in order (the last one repeats). With no responses every call
+    raises `LLMUnavailableError`, so features fall back exactly as when the API is down.
+    """
 
-    async def complete(self, system: str, user: str, max_tokens: int = 2048) -> LLMResult:
-        return LLMResult(self.response, self.model, len(user) // 4, len(self.response) // 4)
+    responses: list[str | Exception] | Responder = field(default_factory=list)
+    model: str = "mock"
+    calls: list[dict[str, Any]] = field(default_factory=list)
 
-    async def stream(self, system: str, user: str, max_tokens: int = 2048) -> AsyncIterator[str]:
-        for i in range(0, len(self.response), 16):
-            yield self.response[i : i + 16]
+    def _next(self, system: str, messages: Sequence[ChatMessage]) -> str:
+        if callable(self.responses):
+            return self.responses(system, messages)
+        if not self.responses:
+            raise LLMUnavailableError("שירות ה-AI אינו מוגדר")
+        item = self.responses.pop(0) if len(self.responses) > 1 else self.responses[0]
+        if isinstance(item, Exception):
+            raise item
+        return item
 
-
-class AnthropicLLMClient:
-    def __init__(self, api_key: str, model: str, timeout: float) -> None:
-        from anthropic import AsyncAnthropic
-
-        self.model = model
-        self._client = AsyncAnthropic(api_key=api_key, timeout=timeout)
-
-    async def complete(self, system: str, user: str, max_tokens: int = 2048) -> LLMResult:
-        msg = await self._client.messages.create(
-            model=self.model,
-            max_tokens=max_tokens,
-            system=system,
-            messages=[{"role": "user", "content": user}],
+    async def stream(
+        self,
+        *,
+        system: str,
+        messages: Sequence[ChatMessage],
+        json_schema: JsonSchema | None = None,
+        effort: Effort = "low",
+        max_tokens: int = 4000,
+    ) -> AsyncIterator[str | LLMResult]:
+        self.calls.append({"system": system, "messages": list(messages), "schema": json_schema})
+        text = self._next(system, messages)
+        for i in range(0, len(text), 24):
+            yield text[i : i + 24]
+        yield LLMResult(
+            text, self.model, sum(len(m["content"]) for m in messages) // 4, len(text) // 4
         )
-        text = "".join(block.text for block in msg.content if block.type == "text")
-        return LLMResult(text, self.model, msg.usage.input_tokens, msg.usage.output_tokens)
-
-    async def stream(self, system: str, user: str, max_tokens: int = 2048) -> AsyncIterator[str]:
-        async with self._client.messages.stream(
-            model=self.model,
-            max_tokens=max_tokens,
-            system=system,
-            messages=[{"role": "user", "content": user}],
-        ) as stream:
-            async for text in stream.text_stream:
-                yield text
 
 
 def build_llm_client(settings: Settings) -> LLMClient:
     if settings.llm_provider == "anthropic":
+        from app.services.ai.anthropic_client import AnthropicLLMClient
+
         return AnthropicLLMClient(
             settings.anthropic_api_key, settings.claude_model, settings.ai_timeout_seconds
         )

@@ -13,7 +13,7 @@ from app.models.enums import (
 )
 from app.models.ingredient import Ingredient
 from app.models.recipe import Recipe, RecipeImage, RecipeIngredient, RecipeStep
-from app.models.system import AICall, AuditLog, Setting
+from app.models.system import AICall, AuditLog, QuotaUsage, Setting
 from app.models.user import User
 from app.models.user_data import Favorite, ShoppingListItem
 
@@ -27,6 +27,7 @@ __all__ = [
     "ImageOrigin",
     "Ingredient",
     "KosherType",
+    "QuotaUsage",
     "Recipe",
     "RecipeImage",
     "RecipeIngredient",

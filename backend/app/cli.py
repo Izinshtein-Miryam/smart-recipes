@@ -11,10 +11,12 @@ import sys
 
 from sqlalchemy import select
 
+from app.config import get_settings
 from app.core.security import hash_password
 from app.db import SessionLocal
 from app.models import Role, User
 from app.seed import seed
+from app.services.embeddings.provider import build_embedding_provider
 
 
 def create_sysadmin(email: str, name: str, password: str | None) -> None:
@@ -52,7 +54,8 @@ def main(argv: list[str] | None = None) -> None:
         create_sysadmin(args.email, args.name, args.password)
     elif args.command == "seed":
         with SessionLocal() as db:
-            print(f"Seeded {seed(db)} recipes")
+            embedder = build_embedding_provider(get_settings())
+            print(f"Seeded {seed(db, embedder)} recipes")
 
 
 if __name__ == "__main__":

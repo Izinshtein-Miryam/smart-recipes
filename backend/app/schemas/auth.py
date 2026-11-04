@@ -22,3 +22,8 @@ class UserOut(BaseModel):
     display_name: str
     role: Role
     dietary_prefs: list[str]
+
+
+class ProfilePatch(BaseModel):
+    display_name: str | None = Field(default=None, min_length=1, max_length=100)
+    dietary_prefs: list[str] | None = None

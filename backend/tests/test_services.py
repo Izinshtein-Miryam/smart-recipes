@@ -8,7 +8,14 @@ from sqlalchemy.orm import Session
 
 from app.config import Settings
 from app.models import AICall, AIFeature
-from app.services.ai.client import LLMResult, MockLLMClient, build_llm_client
+from app.services.ai.client import (
+    ChatMessage,
+    LLMResult,
+    LLMUnavailableError,
+    MockLLMClient,
+    build_llm_client,
+)
+from app.services.ai.pricing import cost_usd
 from app.services.ai.service import AIService
 from app.services.embeddings.provider import (
     MockEmbeddingProvider,
@@ -23,35 +30,56 @@ from app.services.images.provider import (
     build_image_provider,
 )
 
+MESSAGES: list[ChatMessage] = [{"role": "user", "content": "lorem ipsum"}]
+
 
 def test_ai_service_logs_successful_call(db: Session) -> None:
-    service = AIService(MockLLMClient('{"foo": "bar"}'), db)
-    result = asyncio.run(service.complete(AIFeature.SEARCH, "system", "lorem ipsum"))
+    service = AIService(MockLLMClient(['{"foo": "bar"}'], model="claude-opus-5-5"), db, None)
+    result = asyncio.run(service.complete(AIFeature.SEARCH, system="s", messages=MESSAGES))
     assert result.text == '{"foo": "bar"}'
     call = db.scalars(select(AICall)).one()
     assert call.feature == AIFeature.SEARCH
     assert call.status == "ok"
-
-
-class _FailingClient(MockLLMClient):
-    async def complete(self, system: str, user: str, max_tokens: int = 2048) -> LLMResult:
-        raise TimeoutError
+    assert call.cost_usd > 0
 
 
 def test_ai_service_logs_failed_call(db: Session) -> None:
-    service = AIService(_FailingClient(), db)
-    with pytest.raises(TimeoutError):
-        asyncio.run(service.complete(AIFeature.CHAT, "s", "u"))
+    service = AIService(MockLLMClient(), db)
+    with pytest.raises(LLMUnavailableError):
+        asyncio.run(service.complete(AIFeature.CHAT, system="s", messages=MESSAGES))
     assert db.scalars(select(AICall)).one().status == "error"
 
 
-def test_mock_stream_yields_full_response() -> None:
-    client = MockLLMClient("lorem ipsum dolor sit amet consectetur")
+def test_mock_client_script() -> None:
+    client = MockLLMClient(["foo", RuntimeError("bar"), "baz"])
 
     async def collect() -> str:
-        return "".join([chunk async for chunk in client.stream("s", "u")])
+        chunks = [c async for c in client.stream(system="s", messages=MESSAGES)]
+        assert isinstance(chunks[-1], LLMResult)
+        return "".join(c for c in chunks if isinstance(c, str))
 
-    assert asyncio.run(collect()) == client.response
+    assert asyncio.run(collect()) == "foo"
+    with pytest.raises(RuntimeError):
+        asyncio.run(collect())
+    assert asyncio.run(collect()) == "baz"
+    assert asyncio.run(collect()) == "baz"  # last response repeats
+    assert len(client.calls) == 4
+
+
+def test_mock_client_callable() -> None:
+    client = MockLLMClient(lambda system, messages: messages[-1]["content"].upper())
+
+    async def collect() -> str:
+        return "".join(
+            [c async for c in client.stream(system="s", messages=MESSAGES) if isinstance(c, str)]
+        )
+
+    assert asyncio.run(collect()) == "LOREM IPSUM"
+
+
+def test_cost_table() -> None:
+    assert cost_usd("claude-opus-5-5", 1_000_000, 1_000_000) == 24.0
+    assert cost_usd("unknown", 10, 10) == 0.0
 
 
 def test_mock_image_provider_includes_system_prompt() -> None:

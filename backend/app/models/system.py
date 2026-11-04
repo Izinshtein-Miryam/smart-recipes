@@ -51,3 +51,16 @@ class AICall(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, index=True
     )
+
+
+class QuotaUsage(Base):
+    """One row per user-initiated AI action that counts against a daily quota."""
+
+    __tablename__ = "quota_usage"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    client_key: Mapped[str] = mapped_column(String(100), index=True)
+    feature: Mapped[AIFeature] = mapped_column(Enum(AIFeature, native_enum=False))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, index=True
+    )
