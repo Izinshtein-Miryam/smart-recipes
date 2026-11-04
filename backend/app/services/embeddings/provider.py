@@ -41,4 +41,12 @@ def build_embedding_provider(settings: Settings) -> EmbeddingProvider:
         from app.services.embeddings.sentence import SentenceEmbeddingProvider
 
         return SentenceEmbeddingProvider(settings.embedding_model)
+    if settings.embedding_provider == "openai":
+        from app.services.embeddings.openai_provider import OpenAIEmbeddingProvider
+
+        return OpenAIEmbeddingProvider(
+            settings.openai_api_key,
+            settings.openai_embedding_model,
+            settings.ai_timeout_seconds,
+        )
     return MockEmbeddingProvider()

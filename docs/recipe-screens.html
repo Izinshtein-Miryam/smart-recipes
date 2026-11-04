@@ -325,7 +325,7 @@ function searchBox(val='',big=true){
     <div class="ac-list" hidden></div></form>`;
 }
 
-/* ===================== פענוח חיפוש (מדמה את Claude) ===================== */
+/* ===================== פענוח חיפוש (מדמה את מודל השפה של OpenAI) ===================== */
 function parseQuery(text){
   const t=' '+text+' ',p={};
   if(/בשרי/.test(t))p.k='meat';else if(/חלבי/.test(t))p.k='dairy';else if(/פרוו?ה|טבעוני/.test(t))p.k='parve';
@@ -656,7 +656,7 @@ V.adminEdit=(slug)=>{
       </div>
       <div class="lock" style="margin-top:12px">הנחיית מערכת קבועה: המנה בלבד, ללא דמויות אדם, ידיים או טקסט.</div>
       <label class="row small" style="margin-top:10px"><input type="checkbox" id="imgok"> אני מאשר/ת את התמונה לפרסום</label>
-      <p class="small muted">ספק: Google Gemini (Imagen) · המקור נשמר ואפשר לחזור אליו.</p>
+      <p class="small muted">ספק: OpenAI (gpt-image-1) · המקור נשמר ואפשר לחזור אליו.</p>
     </div>
     <div class="card pad"><h3>פרסום</h3>
       <div class="row"><button class="btn" data-act="save-draft" type="button">שמור טיוטה</button><button class="btn primary">פרסם</button><a class="btn ghost" href="#/admin">ביטול</a></div>
@@ -690,14 +690,14 @@ V.system=(tab)=>{
       ${[['wSim','דמיון'],['wTime','התאמת זמן'],['wPop','פופולריות']].map(([k,l])=>`<div class="field"><label class="f">${l}: <b id="v-${k}">${s[k]}</b></label><input type="range" min="0" max="1" step="0.05" name="${k}" value="${s[k]}" data-act="w" style="width:100%"></div>`).join('')}
       <p class="small" id="wsum"></p></div>
     <div class="card pad"><h3>רכיבי בסיס מותרים ביצירה</h3><textarea class="input" rows="3">${BASIC.join(', ')}</textarea></div>
-    <div class="card pad"><h3>מפתחות API</h3><p class="small muted">המפתחות נשמרים בקובץ .env בשרת ואינם מוצגים כאן.</p><div class="row"><span class="chip">Claude API · מחובר</span><span class="chip">Gemini · מחובר</span></div></div>
+    <div class="card pad"><h3>מפתחות API</h3><p class="small muted">המפתחות נשמרים בקובץ .env בשרת ואינם מוצגים כאן.</p><div class="row"><span class="chip">OpenAI API · מחובר</span></div></div>
     <div><button class="btn primary">שמירת הגדרות</button></div></form>`}
   if(tab==='stats'){const F=[['חיפוש חכם',412],["צ'אט עוזר",238],['יצירה חכמה',96],['תמונות',14]],mx=412;body=`
     <div class="grid g4">${[['קריאות AI היום','760'],['עלות היום','$1.84'],['זמן תגובה ממוצע','2.1 שנ\''],['מתכונים מפורסמים',pub().length]].map(([l,v])=>`<div class="card kpi"><span class="small muted">${l}</span><b>${v}</b></div>`).join('')}</div>
     <div class="grid g2 section"><div class="card pad"><h3>קריאות AI לפי פיצ'ר (היום)</h3>${F.map(([l,n])=>`<div class="bar"><span class="l">${l}</span><span class="tr"><i style="width:${n/mx*100}%"></i></span><b>${n}</b></div>`).join('')}</div>
     <div class="card pad"><h3>המתכונים הנצפים ביותר</h3><ol>${[...pub()].sort((a,b)=>b.views-a.views).slice(0,5).map(r=>`<li><a href="#/recipe/${r.slug}">${esc(r.title)}</a> <span class="muted small">· ${r.views} צפיות</span></li>`).join('')}</ol></div></div>`}
   if(tab==='audit')body=`<div class="card table-wrap"><table class="t"><thead><tr><th>זמן</th><th>משתמש</th><th>פעולה</th><th>ישות</th><th>פרטים</th></tr></thead><tbody>
-    ${[['03/11 10:42','foo@example.com','ai.generate','recipe','mode=ingredients · 1,840 tokens · 6.2s'],['03/11 10:31','baz@example.com','recipe.publish','סלט קינואה וירקות','status: draft → published'],['03/11 10:30','baz@example.com','image.ai_edit','סלט קינואה וירקות','Gemini · אושר'],['03/11 09:58','admin@example.com','user.create','baz@example.com','role=content_manager'],['03/11 09:12','guest:10.0.0.4','ai.search','—','"מנה פרווה מהירה" · 0.9s'],['02/11 22:05','admin@example.com','settings.update','quota','qUser: 15 → 20']].map(a=>`<tr>${a.map((c,i)=>`<td>${i===2?`<code>${c}</code>`:esc(c)}</td>`).join('')}</tr>`).join('')}
+    ${[['03/11 10:42','foo@example.com','ai.generate','recipe','mode=ingredients · 1,840 tokens · 6.2s'],['03/11 10:31','baz@example.com','recipe.publish','סלט קינואה וירקות','status: draft → published'],['03/11 10:30','baz@example.com','image.ai_edit','סלט קינואה וירקות','OpenAI · אושר'],['03/11 09:58','admin@example.com','user.create','baz@example.com','role=content_manager'],['03/11 09:12','guest:10.0.0.4','ai.search','—','"מנה פרווה מהירה" · 0.9s'],['02/11 22:05','admin@example.com','settings.update','quota','qUser: 15 → 20']].map(a=>`<tr>${a.map((c,i)=>`<td>${i===2?`<code>${c}</code>`:esc(c)}</td>`).join('')}</tr>`).join('')}
     </tbody></table></div>`;
   return `<div class="section"><h1>מנהל מערכת</h1></div><div class="tabs">${T('users','משתמשים')}${T('settings','הגדרות')}${T('stats','סטטיסטיקות')}${T('audit','יומן פעולות')}</div>${body}`;
 };

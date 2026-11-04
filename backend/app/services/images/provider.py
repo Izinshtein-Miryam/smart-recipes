@@ -45,8 +45,10 @@ def to_webp(data: bytes, quality: int = 85) -> bytes:
 
 
 def build_image_provider(settings: Settings) -> ImageProvider:
-    if settings.image_provider == "gemini":
-        from app.services.images.gemini import GeminiImageProvider
+    if settings.image_provider == "openai":
+        from app.services.images.openai_provider import OpenAIImageProvider
 
-        return GeminiImageProvider(settings.gemini_api_key)
+        return OpenAIImageProvider(
+            settings.openai_api_key, settings.openai_image_model, settings.image_timeout_seconds
+        )
     return MockImageProvider()
