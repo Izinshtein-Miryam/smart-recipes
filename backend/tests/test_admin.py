@@ -5,8 +5,9 @@ from app.models import RecipeStatus
 from app.services import storage
 
 from .conftest import FakeAi, make_recipe
+from .test_recipes import make_png
 
-PNG = b"\x89PNG\r\n\x1a\n" + b"0" * 32
+PNG = make_png()
 
 
 def test_login(client: TestClient) -> None:
@@ -56,7 +57,7 @@ def test_approve_publishes_with_nutrition_and_image(
     assert body["status"] == "approved"
     assert body["nutrition"]["calories"] == 100
     assert body["nutrition"]["confidence"] == "medium"
-    assert body["image_url"] and client.get(body["image_url"]).content == PNG
+    assert body["image_url"] and client.get(body["image_url"]).content[8:12] == b"WEBP"
     assert client.get(f"/api/recipes/{recipe.id}").status_code == 200
 
 

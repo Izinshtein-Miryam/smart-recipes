@@ -88,7 +88,9 @@
     "send": "Submit for approval",
     "pending": "The recipe is waiting for approval",
     "error": "Something went wrong, please try again",
-    "limit": "You reached the daily submission limit"
+    "limit": "You reached the daily submission limit",
+    "imageTooLarge": "The image is too large (up to 5MB)",
+    "imageType": "The file is not a valid JPEG, PNG or WebP image"
   },
   "admin": {
     "loginTitle": "Admin login",

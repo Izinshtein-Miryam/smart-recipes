@@ -25,3 +25,17 @@ def test_seed_never_mixes_meat_and_dairy(db: Session) -> None:
         if r.kashrut == Kashrut.PARVE:
             assert not names & (meat | dairy)
         assert all(b[0] in names or b[1] in names for b in BASICS[:2])
+
+
+def test_delete_removes_webp_and_original() -> None:
+    from app.config import get_settings
+    from app.services import storage
+
+    from .test_recipes import PNG
+
+    rel = storage.save_pending(PNG)
+    root = get_settings().storage_dir
+    assert (root / rel).exists()
+    storage.delete(rel)
+    assert not (root / rel).exists()
+    assert not list((root / "originals").glob("*"))

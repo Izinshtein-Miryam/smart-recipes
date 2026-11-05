@@ -1,7 +1,9 @@
+import io
 import json
 from typing import Any
 
 from fastapi.testclient import TestClient
+from PIL import Image
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
@@ -9,7 +11,14 @@ from app.models import Recipe, RecipeStatus
 
 from .conftest import make_recipe
 
-PNG = b"\x89PNG\r\n\x1a\n" + b"0" * 32
+
+def make_png() -> bytes:
+    buf = io.BytesIO()
+    Image.new("RGB", (4, 4), (200, 90, 50)).save(buf, format="PNG")
+    return buf.getvalue()
+
+
+PNG = make_png()
 
 
 def form(**overrides: object) -> dict[str, object]:
@@ -70,6 +79,10 @@ def test_submit_creates_pending_recipe(client: TestClient, db: Session) -> None:
     assert recipe is not None
     assert recipe.image_path is not None
     assert recipe.image_path.startswith("pending/")
+    assert recipe.image_path.endswith(".webp")  # converted
+    storage_dir = get_settings().storage_dir
+    assert (storage_dir / recipe.image_path).read_bytes()[8:12] == b"WEBP"
+    assert len(list((storage_dir / "originals").glob("*.png"))) == 1  # original kept
     assert recipe.submitter_ip_hash
     assert client.get(f"/api/recipes/{body['id']}").status_code == 404
 
@@ -78,7 +91,12 @@ def test_submit_rejects_bad_image_and_bad_data(client: TestClient) -> None:
     bad_image = client.post(
         "/api/recipes", data=form(), files={"image": ("x.png", b"nope", "image/png")}
     )
-    assert bad_image.status_code == 422
+    assert bad_image.status_code == 415
+    # right signature, but not decodable
+    broken = client.post(
+        "/api/recipes", data=form(), files={"image": ("x.png", PNG[:20], "image/png")}
+    )
+    assert broken.status_code == 415
     assert client.post("/api/recipes", data=form(ingredients="not json")).status_code == 422
     assert client.post("/api/recipes", data=form(servings=0)).status_code == 422
 
@@ -86,7 +104,7 @@ def test_submit_rejects_bad_image_and_bad_data(client: TestClient) -> None:
 def test_submit_rejects_oversize_image(client: TestClient, monkeypatch) -> None:  # type: ignore[no-untyped-def]
     monkeypatch.setattr(get_settings(), "max_image_bytes", 16)
     res = client.post("/api/recipes", data=form(), files={"image": ("x.png", PNG, "image/png")})
-    assert res.status_code == 422
+    assert res.status_code == 413
 
 
 def test_submit_rate_limited_per_ip(client: TestClient, monkeypatch) -> None:  # type: ignore[no-untyped-def]

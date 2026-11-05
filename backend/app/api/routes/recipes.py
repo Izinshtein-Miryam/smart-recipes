@@ -137,8 +137,10 @@ async def submit_recipe(
         content = await image.read(settings.max_image_bytes + 1)
         try:
             image_path = storage.save_pending(content)
+        except storage.ImageTooLargeError as exc:
+            raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, str(exc)) from exc
         except storage.InvalidImageError as exc:
-            raise HTTPException(422, str(exc)) from exc
+            raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, str(exc)) from exc
 
     values = data.model_dump(mode="json", exclude={"ingredients", "steps"})
     recipe = Recipe(

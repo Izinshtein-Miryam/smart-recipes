@@ -18,7 +18,11 @@ export function SubmitPage() {
   const error = submit.error
     ? submit.error instanceof ApiError && submit.error.status === 429
       ? t('submit.limit')
-      : t('submit.error')
+      : submit.error instanceof ApiError && submit.error.status === 413
+        ? t('submit.imageTooLarge')
+        : submit.error instanceof ApiError && submit.error.status === 415
+          ? t('submit.imageType')
+          : t('submit.error')
     : null;
 
   return (
