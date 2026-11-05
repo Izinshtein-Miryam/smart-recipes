@@ -1,6 +1,6 @@
 # מתכונים חכם
 
-אתר מתכונים בעברית (RTL) עם ניווט חכם, יצירה חכמה והמלצות, מבוסס Claude API.
+אתר מתכונים בעברית (RTL) עם ניווט חכם, יצירה חכמה והמלצות, מבוסס OpenAI API.
 פרויקט לימוד והדגמה שרץ מקומית.
 
 - אפיון: [`docs/SPEC.md`](docs/SPEC.md)
@@ -16,7 +16,7 @@ backend/            FastAPI + SQLAlchemy 2 + Alembic (Python 3.12)
     domain/         לוגיקה טהורה: בדיקת בשר/חלב, חישוב מנות
     models/         טבלאות מסד הנתונים לפי האפיון
     schemas/        סכמות Pydantic לבקשות ותגובות
-    services/       שכבות AI: ai (Claude), images (ImageProvider), embeddings
+    services/       שכבות AI: ai (OpenAI), images (ImageProvider), embeddings
     seed/           נתוני דמה ופקודת seed
     cli.py          create-sysadmin, seed
   alembic/          מיגרציות

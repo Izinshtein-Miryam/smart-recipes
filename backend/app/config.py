@@ -19,9 +19,9 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["http://localhost:5173"]
     media_dir: Path = Path("./media")
 
-    llm_provider: Literal["mock", "anthropic"] = "mock"
-    anthropic_api_key: str = ""
-    claude_model: str = "claude-sonnet-5-5"
+    llm_provider: Literal["mock", "openai"] = "mock"
+    openai_api_key: str = ""
+    openai_model: str = "gpt-4o"
     ai_timeout_seconds: float = 30.0
 
     image_provider: Literal["mock", "gemini"] = "mock"
