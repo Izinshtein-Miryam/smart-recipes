@@ -101,3 +101,19 @@ def test_submit_with_unknown_source_recipe(client: TestClient) -> None:
         "/api/recipes", data=form(source_recipe_id="00000000-0000-0000-0000-000000000000")
     )
     assert res.status_code == 422
+
+
+def test_get_recipe_scales_servings(client: TestClient, db: Session) -> None:
+    recipe = make_recipe(db)  # 4 servings, bar 2 g
+    body = client.get(f"/api/recipes/{recipe.id}?servings=8").json()
+    assert body["servings"] == 8
+    assert body["ingredients"][0]["quantity"] == 4.0
+    assert client.get(f"/api/recipes/{recipe.id}?servings=0").status_code == 422
+
+
+def test_list_recipes_pagination_and_total(client: TestClient, db: Session) -> None:
+    for i in range(3):
+        make_recipe(db, title=f"foo {i}")
+    res = client.get("/api/recipes?limit=2&offset=2")
+    assert len(res.json()) == 1
+    assert res.headers["x-total-count"] == "3"

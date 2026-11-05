@@ -1,11 +1,15 @@
 """AI endpoints (public). Failures surface as 503 `ai_unavailable`, see main.py."""
 
+import json
 import uuid
+from collections.abc import Iterator
 
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
+from sse_starlette.sse import EventSourceResponse
 
 from app.core.deps import AiDep, DbSession
+from app.db import SessionLocal
 from app.models import Recipe, RecipeStatus
 from app.schemas.ai import (
     AdaptedRecipe,
@@ -64,7 +68,14 @@ def adapt(body: AdaptRequest, db: DbSession, ai: AiDep) -> AdaptedRecipe:
 
 
 @router.post("/chat")
-def chat(_body: ChatRequest) -> None:
-    # TODO: SSE stream (text_delta, tool_started, recipe_adapted, recipe_scaled, done, error)
-    # with the tool loop limited to MAX_TOOL_ROUNDS. See docs/SPEC.md.
-    raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED, "chat is not implemented yet")
+def chat(body: ChatRequest, db: DbSession, ai: AiDep) -> EventSourceResponse:
+    recipe = _approved_recipe(db, body.recipe_id)
+    db.expunge(recipe)  # the stream outlives the request-scoped session
+
+    def events() -> Iterator[dict[str, str]]:
+        # The request-scoped session is closed before streaming starts, so open our own.
+        with SessionLocal() as stream_db:
+            for ev in ai.chat_stream(stream_db, recipe, body.message, body.previous_response_id):
+                yield {"event": ev["event"], "data": json.dumps(ev["data"], ensure_ascii=False)}
+
+    return EventSourceResponse(events())
