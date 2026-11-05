@@ -6,7 +6,7 @@ Move an endpoint to its own module when you start working on it.
 
 from fastapi import APIRouter, HTTPException, status
 
-from app.core.deps import ContentManager, CurrentUser, SysAdmin
+from app.core.deps import CurrentUser
 
 
 def _todo() -> None:
@@ -19,8 +19,6 @@ generate = APIRouter(prefix="/generate", tags=["generate"])
 recommendations = APIRouter(tags=["recommendations"])
 favorites = APIRouter(prefix="/favorites", tags=["favorites"])
 shopping = APIRouter(prefix="/shopping-list", tags=["shopping-list"])
-admin = APIRouter(prefix="/admin", tags=["admin"])
-system = APIRouter(prefix="/system", tags=["system"])
 
 
 @search.get("/suggest", summary="השלמה אוטומטית (מקומי, ללא AI)")
@@ -73,34 +71,4 @@ def get_shopping_list(user: CurrentUser) -> None:
     _todo()
 
 
-@admin.post("/recipes")
-def admin_create_recipe(user: ContentManager) -> None:
-    _todo()
-
-
-@admin.post("/recipes/{recipe_id}/images", summary="העלאה, עיבוד או יצירה של תמונה")
-def admin_recipe_image(recipe_id: int, user: ContentManager) -> None:
-    _todo()
-
-
-@system.get("/users")
-def system_users(user: SysAdmin) -> None:
-    _todo()
-
-
-@system.get("/settings")
-def system_settings(user: SysAdmin) -> None:
-    _todo()
-
-
-@system.get("/stats")
-def system_stats(user: SysAdmin) -> None:
-    _todo()
-
-
-@system.get("/audit")
-def system_audit(user: SysAdmin) -> None:
-    _todo()
-
-
-routers = [search, assistant, generate, recommendations, favorites, shopping, admin, system]
+routers = [search, assistant, generate, recommendations, favorites, shopping]
