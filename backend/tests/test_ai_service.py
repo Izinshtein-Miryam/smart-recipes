@@ -4,11 +4,12 @@ from typing import Any
 import httpx
 import openai
 import pytest
+from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from app.models import AiUsageLog
 from app.schemas.ai import FridgeMatch, FridgeSearchResult
-from app.services.ai_service import AiService, AiUnavailableError
+from app.services.ai_service import AiRefusalError, AiService, AiUnavailableError
 
 from .conftest import make_recipe
 
@@ -87,3 +88,43 @@ def test_missing_api_key_is_unavailable(db: Session) -> None:
     recipe = make_recipe(db)
     with pytest.raises(AiUnavailableError):
         AiService(None, "m").estimate_nutrition(db, recipe)
+
+
+def refusal_reply(text: str) -> Any:
+    part = SimpleNamespace(type="refusal", refusal=text)
+    message = SimpleNamespace(type="message", content=[part])
+    return SimpleNamespace(
+        output_parsed=None,
+        output=[message],
+        id="resp_bar",
+        usage=SimpleNamespace(input_tokens=5, output_tokens=2),
+    )
+
+
+def test_refusal_raises_clear_error_and_logs_usage(db: Session) -> None:
+    recipe = make_recipe(db)
+    client = FakeClient(refusal_reply("lorem ipsum"))
+    with pytest.raises(AiRefusalError, match="lorem ipsum"):
+        AiService(client, "m").estimate_nutrition(db, recipe)  # type: ignore[arg-type]
+    assert client.calls == 1
+    assert db.query(AiUsageLog).count() == 1
+
+
+def test_invalid_json_is_unavailable_without_retry(db: Session) -> None:
+    recipe = make_recipe(db)
+    try:
+        FridgeSearchResult.model_validate_json("{not json")
+    except ValidationError as exc:
+        invalid = exc
+    client = FakeClient(invalid)
+    with pytest.raises(AiUnavailableError, match="invalid structured output"):
+        AiService(client, "m").fridge_search(db, ["bar"], [recipe])  # type: ignore[arg-type]
+    assert client.calls == 1
+    assert db.query(AiUsageLog).count() == 0
+
+
+def test_empty_output_without_refusal_is_unavailable(db: Session) -> None:
+    recipe = make_recipe(db)
+    client = FakeClient(reply(None))
+    with pytest.raises(AiUnavailableError, match="empty structured output"):
+        AiService(client, "m").estimate_nutrition(db, recipe)  # type: ignore[arg-type]
