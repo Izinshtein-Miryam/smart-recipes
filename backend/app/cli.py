@@ -14,7 +14,7 @@ from app.services import storage
 
 
 def hash_admin_password() -> None:
-    """Prints a bcrypt hash to put in ADMIN_PASSWORD_HASH (wrap it in single quotes in .env files)."""
+    """Print a bcrypt hash for ADMIN_PASSWORD_HASH (wrap it in single quotes in .env files)."""
     print(hash_password(getpass.getpass("Admin password: ")))
 
 
