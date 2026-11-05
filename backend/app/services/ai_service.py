@@ -5,7 +5,7 @@ import logging
 from typing import Any, TypeVar
 
 import openai
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 from sqlalchemy.orm import Session
 
 from app.config import Settings
@@ -52,6 +52,19 @@ class AiUnavailableError(Exception):
     """The AI call failed or is not configured; callers return a friendly message."""
 
 
+class AiRefusalError(AiUnavailableError):
+    """The model declined to answer; the message carries the refusal text."""
+
+
+def _refusal_text(response: Any) -> str | None:
+    """Return the model's refusal text, if the response contains one."""
+    for item in getattr(response, "output", None) or []:
+        for part in getattr(item, "content", None) or []:
+            if getattr(part, "type", None) == "refusal":
+                return str(part.refusal)
+    return None
+
+
 def _is_retryable(exc: Exception) -> bool:
     return isinstance(exc, openai.RateLimitError) or (
         isinstance(exc, openai.APIStatusError) and exc.status_code >= 500
@@ -90,9 +103,10 @@ class AiService:
         )
         db.commit()
 
-    def _parse(
+    def parse(
         self, db: Session, feature: AiFeature, instructions: str, payload: str, schema: type[T]
     ) -> T:
+        """Call the model with Structured Outputs; the schema comes from the Pydantic model."""
         if self._client is None:
             raise AiUnavailableError("OPENAI_API_KEY is not configured")
         last: Exception | None = None
@@ -104,12 +118,18 @@ class AiService:
                     input=payload,
                     text_format=schema,
                 )
+            except ValidationError as exc:  # the model returned JSON that does not fit the schema
+                log.warning("openai invalid structured output (%s): %s", feature.value, exc)
+                raise AiUnavailableError("invalid structured output") from exc
             except openai.OpenAIError as exc:
                 last = exc
                 if _is_retryable(exc):
                     continue
                 break
             self.log_usage(db, feature, response)
+            refusal = _refusal_text(response)
+            if refusal is not None:
+                raise AiRefusalError(f"model refused: {refusal}")
             if response.output_parsed is None:
                 raise AiUnavailableError("empty structured output")
             return response.output_parsed
@@ -125,7 +145,7 @@ class AiService:
             for r in candidates
         ]
         payload = json.dumps({"have": ingredients, "recipes": compact}, ensure_ascii=False)
-        result = self._parse(
+        result = self.parse(
             db, AiFeature.FRIDGE_SEARCH, prompts.FRIDGE_SEARCH, payload, FridgeSearchResult
         )
         known = {str(r.id) for r in candidates}
@@ -137,7 +157,7 @@ class AiService:
         payload = json.dumps(
             {"servings": recipe.servings, "ingredients": recipe.ingredients}, ensure_ascii=False
         )
-        return self._parse(db, AiFeature.NUTRITION, prompts.NUTRITION, payload, NutritionEstimate)
+        return self.parse(db, AiFeature.NUTRITION, prompts.NUTRITION, payload, NutritionEstimate)
 
     def adapt_recipe(self, db: Session, recipe: Recipe, instruction: str) -> AdaptedRecipe:
         payload = json.dumps(
@@ -157,4 +177,4 @@ class AiService:
             },
             ensure_ascii=False,
         )
-        return self._parse(db, AiFeature.ADAPT, prompts.ADAPT, payload, AdaptedRecipe)
+        return self.parse(db, AiFeature.ADAPT, prompts.ADAPT, payload, AdaptedRecipe)
