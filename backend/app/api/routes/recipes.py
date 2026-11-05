@@ -1,85 +1,135 @@
+"""Public recipe endpoints: browse approved recipes and submit new ones (pending approval)."""
+
+import hashlib
+import json
+import uuid
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query, status
-from sqlalchemy import func, select
-from sqlalchemy.orm import selectinload
+from fastapi import APIRouter, Form, HTTPException, Query, Request, UploadFile, status
+from pydantic import ValidationError
+from sqlalchemy import select
 
+from app.config import get_settings
 from app.core.deps import DbSession
-from app.domain.servings import scale_quantity
-from app.models import Difficulty, DishType, KosherType, Recipe, RecipeIngredient, RecipeStatus
-from app.schemas.recipe import IngredientLine, Page, RecipeCard, RecipeDetail, StepOut
+from app.models import Difficulty, Equipment, Kashrut, Lang, Recipe, RecipeStatus
+from app.schemas.recipe import RecipeCreate, RecipeOut, RecipeSummary
+from app.services import storage
 
 router = APIRouter(prefix="/recipes", tags=["recipes"])
 
 
-@router.get("", response_model=Page[RecipeCard], summary="רשימת מתכונים עם מסננים ועימוד")
+@router.get("", response_model=list[RecipeSummary])
 def list_recipes(
     db: DbSession,
-    kosher_type: KosherType | None = None,
-    dish_type: DishType | None = None,
-    difficulty: Difficulty | None = None,
+    lang: Lang | None = None,
     max_minutes: Annotated[int | None, Query(ge=1)] = None,
+    difficulty: Difficulty | None = None,
+    equipment: Annotated[list[Equipment] | None, Query()] = None,
+    servings: Annotated[int | None, Query(ge=1)] = None,
+    kashrut: Kashrut | None = None,
     q: Annotated[str | None, Query(max_length=100)] = None,
-    page: Annotated[int, Query(ge=1)] = 1,
-    page_size: Annotated[int, Query(ge=1, le=100)] = 24,
-) -> Page[RecipeCard]:
-    stmt = select(Recipe).where(Recipe.status == RecipeStatus.PUBLISHED)
-    if kosher_type:
-        stmt = stmt.where(Recipe.kosher_type == kosher_type)
-    if dish_type:
-        stmt = stmt.where(Recipe.dish_type == dish_type)
+) -> list[Recipe]:
+    stmt = select(Recipe).where(Recipe.status == RecipeStatus.APPROVED)
+    if lang:
+        stmt = stmt.where(Recipe.lang == lang)
+    if max_minutes:
+        stmt = stmt.where(Recipe.prep_minutes <= max_minutes)
     if difficulty:
         stmt = stmt.where(Recipe.difficulty == difficulty)
-    if max_minutes:
-        stmt = stmt.where(Recipe.prep_minutes + Recipe.cook_minutes <= max_minutes)
+    if equipment:
+        stmt = stmt.where(Recipe.equipment.contains(equipment))
+    if servings:
+        stmt = stmt.where(Recipe.servings == servings)
+    if kashrut:
+        stmt = stmt.where(Recipe.kashrut == kashrut)
     if q:
-        stmt = stmt.where(Recipe.title.contains(q))
+        like = f"%{q}%"
+        stmt = stmt.where(Recipe.title.ilike(like) | Recipe.description.ilike(like))
+    return list(db.scalars(stmt.order_by(Recipe.approved_at.desc())))
 
-    total = db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
-    rows = db.scalars(
-        stmt.order_by(Recipe.created_at.desc()).offset((page - 1) * page_size).limit(page_size)
-    ).all()
-    return Page(
-        items=[RecipeCard.model_validate(r) for r in rows],
-        total=total,
-        page=page,
-        page_size=page_size,
+
+@router.get("/{recipe_id}", response_model=RecipeOut)
+def get_recipe(recipe_id: uuid.UUID, db: DbSession) -> Recipe:
+    recipe = db.get(Recipe, recipe_id)
+    if recipe is None or recipe.status != RecipeStatus.APPROVED:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "recipe not found")
+    return recipe
+
+
+def _ip_hash(request: Request) -> str:
+    ip = request.client.host if request.client else "unknown"
+    salt = get_settings().jwt_secret
+    return hashlib.sha256(f"{salt}:{ip}".encode()).hexdigest()
+
+
+@router.post("", response_model=RecipeOut, status_code=status.HTTP_201_CREATED)
+async def submit_recipe(
+    request: Request,
+    db: DbSession,
+    lang: Annotated[Lang, Form()],
+    title: Annotated[str, Form()],
+    description: Annotated[str, Form()],
+    servings: Annotated[int, Form()],
+    prep_minutes: Annotated[int, Form()],
+    difficulty: Annotated[Difficulty, Form()],
+    kashrut: Annotated[Kashrut, Form()],
+    ingredients: Annotated[str, Form(description="JSON array")],
+    steps: Annotated[str, Form(description="JSON array of strings")],
+    equipment: Annotated[list[Equipment] | None, Form()] = None,
+    source_recipe_id: Annotated[uuid.UUID | None, Form()] = None,
+    image: UploadFile | None = None,
+) -> Recipe:
+    settings = get_settings()
+    ip_hash = _ip_hash(request)
+
+    since = datetime.now(UTC) - timedelta(days=1)
+    recent = db.query(Recipe).filter(
+        Recipe.submitter_ip_hash == ip_hash, Recipe.created_at >= since
     )
+    if recent.count() >= settings.max_submissions_per_day:
+        raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "daily submission limit reached")
 
-
-@router.get("/{slug}", response_model=RecipeDetail, summary="מתכון מלא")
-def get_recipe(
-    slug: str, db: DbSession, servings: Annotated[int | None, Query(ge=1, le=100)] = None
-) -> RecipeDetail:
-    recipe = db.scalar(
-        select(Recipe)
-        .where(Recipe.slug == slug, Recipe.status == RecipeStatus.PUBLISHED)
-        .options(
-            selectinload(Recipe.ingredients).selectinload(RecipeIngredient.ingredient),
-            selectinload(Recipe.steps),
+    try:
+        data = RecipeCreate.model_validate(
+            {
+                "lang": lang,
+                "title": title,
+                "description": description,
+                "servings": servings,
+                "prep_minutes": prep_minutes,
+                "difficulty": difficulty,
+                "kashrut": kashrut,
+                "equipment": equipment or [],
+                "ingredients": json.loads(ingredients),
+                "steps": json.loads(steps),
+                "source_recipe_id": source_recipe_id,
+            }
         )
-    )
-    if recipe is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "המתכון לא נמצא")
+    except (ValidationError, json.JSONDecodeError) as exc:
+        raise HTTPException(422, "invalid recipe data") from exc
 
-    target = servings or recipe.servings
-    card = RecipeCard.model_validate(recipe)
-    return RecipeDetail(
-        **card.model_dump(),
-        prep_minutes=recipe.prep_minutes,
-        cook_minutes=recipe.cook_minutes,
-        servings=target,
-        time_tags=recipe.time_tags,
-        ingredients=[
-            IngredientLine(
-                ingredient_id=ri.ingredient_id,
-                name=ri.ingredient.name,
-                quantity=scale_quantity(ri.quantity, recipe.servings, target),
-                unit=ri.unit,
-                note=ri.note,
-            )
-            for ri in recipe.ingredients
-        ],
-        steps=[StepOut.model_validate(s) for s in recipe.steps],
-        created_at=recipe.created_at,
+    if data.source_recipe_id and db.get(Recipe, data.source_recipe_id) is None:
+        raise HTTPException(422, "unknown source recipe")
+
+    image_path = None
+    if image is not None and image.filename:
+        # Read one byte past the limit so oversize uploads are rejected without buffering them all.
+        content = await image.read(settings.max_image_bytes + 1)
+        try:
+            image_path = storage.save_pending(content)
+        except storage.InvalidImageError as exc:
+            raise HTTPException(422, str(exc)) from exc
+
+    values = data.model_dump(mode="json", exclude={"ingredients", "steps"})
+    recipe = Recipe(
+        **{**values, "source_recipe_id": data.source_recipe_id},
+        ingredients=[i.model_dump() for i in data.ingredients],
+        steps=data.steps,
+        image_path=image_path,
+        submitter_ip_hash=ip_hash,
     )
+    db.add(recipe)
+    db.commit()
+    db.refresh(recipe)
+    return recipe

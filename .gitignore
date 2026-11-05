@@ -11,8 +11,8 @@ htmlcov/
 
 # Local data & secrets
 .env
-*.db
-backend/media/
+storage/
+backend/storage/
 
 # Node
 node_modules/

@@ -1,11 +1,18 @@
-"""Scaling ingredient quantities to a different number of servings."""
+"""Pure serving-size scaling, used by the chat `scale_servings` tool (no AI involved)."""
+
+from typing import Any
 
 
-def scale_quantity(
-    quantity: float | None, base_servings: int, target_servings: int
-) -> float | None:
-    if quantity is None:
-        return None
-    if base_servings <= 0 or target_servings <= 0:
+def scale_ingredients(
+    ingredients: list[dict[str, Any]], from_servings: int, to_servings: int
+) -> list[dict[str, Any]]:
+    if from_servings < 1 or to_servings < 1:
         raise ValueError("servings must be positive")
-    return round(quantity * target_servings / base_servings, 2)
+    factor = to_servings / from_servings
+    scaled = []
+    for item in ingredients:
+        quantity = item.get("quantity")
+        scaled.append(
+            {**item, "quantity": None if quantity is None else round(quantity * factor, 2)}
+        )
+    return scaled

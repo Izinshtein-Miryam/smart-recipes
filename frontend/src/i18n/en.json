@@ -1,0 +1,40 @@
+{
+  "app": { "name": "Pot & Pan" },
+  "nav": {
+    "label": "Main navigation",
+    "recipes": "Recipes",
+    "fridge": "What's in my fridge?",
+    "submit": "Add a recipe",
+    "admin": "Admin"
+  },
+  "lang": { "switchTo": "עברית" },
+  "common": {
+    "loading": "Loading…",
+    "loadError": "Failed to load data",
+    "aiUnavailable": "The smart service is unavailable right now, please try again shortly",
+    "comingSoon": "This screen is under construction",
+    "minutes": "min",
+    "servings": "servings",
+    "ingredients": "Ingredients",
+    "steps": "Steps"
+  },
+  "kashrut": { "meat": "Meat", "dairy": "Dairy", "parve": "Parve" },
+  "difficulty": { "easy": "Easy", "medium": "Medium", "hard": "Hard" },
+  "home": {
+    "title": "Simple, tasty home cooking.",
+    "empty": "No approved recipes yet"
+  },
+  "recipe": {
+    "nutrition": "Nutrition per serving (estimated)",
+    "calories": "Calories",
+    "protein": "Protein",
+    "carbs": "Carbs",
+    "fat": "Fat",
+    "notFound": "Recipe not found"
+  },
+  "fridge": { "title": "What's in my fridge" },
+  "adapted": { "title": "Adapted recipe" },
+  "submit": { "title": "Submit a recipe" },
+  "admin": { "loginTitle": "Admin login", "queueTitle": "Approval queue" },
+  "notFound": { "title": "Page not found" }
+}

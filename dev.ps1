@@ -1,5 +1,11 @@
-# Runs backend (uvicorn :8000) and frontend (vite :5173) together. Ctrl+C stops both.
+# Starts PostgreSQL (docker compose), then backend (uvicorn :8000) and frontend (vite :5173).
 $root = $PSScriptRoot
+
+if (-not (Test-Path "$root\.env")) {
+  Write-Error "Missing .env - copy .env.example to .env first (POSTGRES_PASSWORD is required)."
+  exit 1
+}
+docker compose -f "$root\docker-compose.yml" -f "$root\docker-compose.dev.yml" up -d --wait postgres
 
 $back = Start-Process -PassThru -NoNewWindow -WorkingDirectory "$root\backend" `
   -FilePath "$root\backend\.venv\Scripts\uvicorn.exe" `

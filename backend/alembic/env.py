@@ -2,6 +2,7 @@ from logging.config import fileConfig
 
 import app.models  # noqa: F401 - registers tables
 from alembic import context
+from app.config import get_settings
 from app.db import Base, engine
 
 config = context.config
@@ -13,10 +14,7 @@ target_metadata = Base.metadata
 
 def run_migrations_offline() -> None:
     context.configure(
-        url=str(engine.url),
-        target_metadata=target_metadata,
-        literal_binds=True,
-        render_as_batch=True,
+        url=get_settings().database_url, target_metadata=target_metadata, literal_binds=True
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -24,9 +22,7 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     with engine.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata, render_as_batch=True
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
         with context.begin_transaction():
             context.run_migrations()
 

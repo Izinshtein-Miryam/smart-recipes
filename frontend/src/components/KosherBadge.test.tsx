@@ -7,7 +7,7 @@ describe('KosherBadge', () => {
     ['meat', 'בשרי'],
     ['dairy', 'חלבי'],
     ['parve', 'פרווה'],
-  ] as const)('renders %s label', (type, label) => {
+  ] as const)('renders the %s label', (type, label) => {
     render(<KosherBadge type={type} />);
     expect(screen.getByText(label)).toBeInTheDocument();
   });

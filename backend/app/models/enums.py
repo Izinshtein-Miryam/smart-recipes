@@ -1,26 +1,11 @@
-"""Shared enumerations for the data model."""
+"""Shared enumerations. Values are stored in PostgreSQL ENUM types."""
 
 from enum import StrEnum
 
 
-class Role(StrEnum):
-    USER = "user"
-    CONTENT_MANAGER = "content_manager"
-    SYSADMIN = "sysadmin"
-
-
-class KosherType(StrEnum):
-    MEAT = "meat"
-    DAIRY = "dairy"
-    PARVE = "parve"
-
-
-class DishType(StrEnum):
-    STARTER = "starter"
-    MAIN = "main"
-    SIDE = "side"
-    DESSERT = "dessert"
-    BAKED = "baked"
+class Lang(StrEnum):
+    HE = "he"
+    EN = "en"
 
 
 class Difficulty(StrEnum):
@@ -29,32 +14,27 @@ class Difficulty(StrEnum):
     HARD = "hard"
 
 
+class Equipment(StrEnum):
+    OVEN = "oven"
+    STOVETOP = "stovetop"
+    ONE_POT = "one_pot"
+    NO_COOK = "no_cook"
+
+
+class Kashrut(StrEnum):
+    MEAT = "meat"
+    DAIRY = "dairy"
+    PARVE = "parve"
+
+
 class RecipeStatus(StrEnum):
-    DRAFT = "draft"
-    PUBLISHED = "published"
-    HIDDEN = "hidden"
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
 
 
-class RecipeSource(StrEnum):
-    ADMIN = "admin"
-    AI = "ai"
-
-
-class TimeTag(StrEnum):
-    MORNING = "morning"
-    NOON = "noon"
-    EVENING = "evening"
-    MAKE_AHEAD = "make_ahead"
-
-
-class ImageOrigin(StrEnum):
-    UPLOAD = "upload"
-    AI_EDIT = "ai_edit"
-    AI_GENERATE = "ai_generate"
-
-
-class AIFeature(StrEnum):
-    SEARCH = "search"
+class AiFeature(StrEnum):
+    FRIDGE_SEARCH = "fridge_search"
+    NUTRITION = "nutrition"
+    ADAPT = "adapt"
     CHAT = "chat"
-    GENERATE = "generate"
-    IMAGE = "image"
