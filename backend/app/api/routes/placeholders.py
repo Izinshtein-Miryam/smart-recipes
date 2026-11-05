@@ -17,8 +17,6 @@ search = APIRouter(prefix="/search", tags=["search"])
 assistant = APIRouter(prefix="/assistant", tags=["assistant"])
 generate = APIRouter(prefix="/generate", tags=["generate"])
 recommendations = APIRouter(tags=["recommendations"])
-favorites = APIRouter(prefix="/favorites", tags=["favorites"])
-shopping = APIRouter(prefix="/shopping-list", tags=["shopping-list"])
 admin = APIRouter(prefix="/admin", tags=["admin"])
 system = APIRouter(prefix="/system", tags=["system"])
 
@@ -58,21 +56,6 @@ def similar(recipe_id: int) -> None:
     _todo()
 
 
-@favorites.post("/{recipe_id}")
-def add_favorite(recipe_id: int, user: CurrentUser) -> None:
-    _todo()
-
-
-@favorites.delete("/{recipe_id}")
-def remove_favorite(recipe_id: int, user: CurrentUser) -> None:
-    _todo()
-
-
-@shopping.get("")
-def get_shopping_list(user: CurrentUser) -> None:
-    _todo()
-
-
 @admin.post("/recipes")
 def admin_create_recipe(user: ContentManager) -> None:
     _todo()
@@ -103,4 +86,4 @@ def system_audit(user: SysAdmin) -> None:
     _todo()
 
 
-routers = [search, assistant, generate, recommendations, favorites, shopping, admin, system]
+routers = [search, assistant, generate, recommendations, admin, system]

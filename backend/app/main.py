@@ -4,7 +4,7 @@ from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routes import auth, health, placeholders, recipes
+from app.api.routes import auth, favorites, health, placeholders, recipes, shopping
 from app.config import get_settings
 
 
@@ -24,7 +24,14 @@ def create_app() -> FastAPI:
     )
 
     api = APIRouter(prefix="/api")
-    for router in (health.router, auth.router, recipes.router, *placeholders.routers):
+    for router in (
+        health.router,
+        auth.router,
+        recipes.router,
+        favorites.router,
+        shopping.router,
+        *placeholders.routers,
+    ):
         api.include_router(router)
     app.include_router(api)
 
