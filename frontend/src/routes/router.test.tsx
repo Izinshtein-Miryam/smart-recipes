@@ -33,7 +33,7 @@ describe('router', () => {
     renderRoute('/');
     expect(await screen.findByRole('heading', { name: 'foo' })).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'ניווט ראשי' })).toBeInTheDocument();
-    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/recipes?lang=he');
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/recipes?lang=he&limit=12&offset=0');
   });
 
   it('renders the fridge search screen', () => {

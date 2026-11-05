@@ -1,5 +1,7 @@
 {
-  "app": { "name": "Pot & Pan" },
+  "app": {
+    "name": "Pot & Pan"
+  },
   "nav": {
     "label": "Main navigation",
     "recipes": "Recipes",
@@ -7,7 +9,9 @@
     "submit": "Add a recipe",
     "admin": "Admin"
   },
-  "lang": { "switchTo": "עברית" },
+  "lang": {
+    "switchTo": "עברית"
+  },
   "common": {
     "loading": "Loading…",
     "loadError": "Failed to load data",
@@ -16,13 +20,27 @@
     "minutes": "min",
     "servings": "servings",
     "ingredients": "Ingredients",
-    "steps": "Steps"
+    "steps": "Steps",
+    "add": "Add",
+    "remove": "Remove",
+    "close": "Close",
+    "prev": "Previous",
+    "next": "Next",
+    "pagination": "Pagination"
   },
-  "kashrut": { "meat": "Meat", "dairy": "Dairy", "parve": "Parve" },
-  "difficulty": { "easy": "Easy", "medium": "Medium", "hard": "Hard" },
+  "kashrut": {
+    "meat": "Meat",
+    "dairy": "Dairy",
+    "parve": "Parve"
+  },
+  "difficulty": {
+    "easy": "Easy",
+    "medium": "Medium",
+    "hard": "Hard"
+  },
   "home": {
     "title": "Simple, tasty home cooking.",
-    "empty": "No approved recipes yet"
+    "empty": "No recipes found"
   },
   "recipe": {
     "nutrition": "Nutrition per serving (estimated)",
@@ -30,11 +48,118 @@
     "protein": "Protein",
     "carbs": "Carbs",
     "fat": "Fat",
-    "notFound": "Recipe not found"
+    "notFound": "Recipe not found",
+    "backToList": "Back to the list",
+    "startCooking": "Start cooking",
+    "print": "Print",
+    "share": "Share",
+    "linkCopied": "Link copied",
+    "servingsPicker": "Number of servings",
+    "fewer": "Fewer servings",
+    "more": "More servings",
+    "adaptTitle": "Adapt this recipe",
+    "adaptPlaceholder": "e.g. gluten free",
+    "adaptGo": "Adapt",
+    "quick1": "Make it vegetarian",
+    "quick2": "Lower calories",
+    "quick3": "Gluten free"
   },
-  "fridge": { "title": "What's in my fridge" },
-  "adapted": { "title": "Adapted recipe" },
-  "submit": { "title": "Submit a recipe" },
-  "admin": { "loginTitle": "Admin login", "queueTitle": "Approval queue" },
-  "notFound": { "title": "Page not found" }
+  "fridge": {
+    "title": "What's in my fridge",
+    "hint": "Add what you have and we will find matching recipes.",
+    "ingredients": "Ingredients",
+    "search": "Find recipes",
+    "none": "No matching recipes found",
+    "match": "Match",
+    "missing": "Missing"
+  },
+  "adapted": {
+    "title": "Adapted recipe",
+    "missing": "There is no adapted recipe to show.",
+    "back": "Back to the original recipe",
+    "infeasible": "The adaptation is not possible:",
+    "changes": "Changes",
+    "original": "Original",
+    "adapted": "Adapted",
+    "save": "Save as a new recipe"
+  },
+  "submit": {
+    "title": "Submit a recipe",
+    "send": "Submit for approval",
+    "pending": "The recipe is waiting for approval",
+    "error": "Something went wrong, please try again",
+    "limit": "You reached the daily submission limit",
+    "imageTooLarge": "The image is too large (up to 5MB)",
+    "imageType": "The file is not a valid JPEG, PNG or WebP image"
+  },
+  "admin": {
+    "loginTitle": "Admin login",
+    "queueTitle": "Approval queue",
+    "password": "Password",
+    "login": "Sign in",
+    "badPassword": "Wrong password",
+    "status": "Status",
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "empty": "No recipes to show",
+    "edit": "Edit",
+    "approve": "Approve",
+    "recalc": "Recalculate nutrition",
+    "reject": "Reject",
+    "confirmReject": "Reject this recipe?",
+    "save": "Save",
+    "noNutrition": "Nutrition values missing"
+  },
+  "notFound": {
+    "title": "Page not found"
+  },
+  "equipment": {
+    "oven": "Oven",
+    "stovetop": "Stovetop",
+    "one_pot": "One pot",
+    "no_cook": "No cook"
+  },
+  "filters": {
+    "label": "Filter recipes",
+    "search": "Search",
+    "any": "Any",
+    "kashrut": "Kashrut",
+    "difficulty": "Difficulty",
+    "equipment": "Method",
+    "maxMinutes": "Max time (min)",
+    "servings": "Servings",
+    "clear": "Clear"
+  },
+  "chat": {
+    "open": "Cooking assistant",
+    "title": "Cooking assistant",
+    "hint": "Ask about the recipe, swap an ingredient or change the servings.",
+    "placeholder": "Type a message…",
+    "send": "Send"
+  },
+  "form": {
+    "title": "Recipe name",
+    "lang": "Language",
+    "description": "Description",
+    "prepMinutes": "Prep time (min)",
+    "ingName": "Ingredient",
+    "ingQty": "Quantity",
+    "ingUnit": "Unit",
+    "addIngredient": "Add ingredient",
+    "step": "Step",
+    "addStep": "Add step",
+    "image": "Image (JPEG, PNG or WebP up to 5MB)"
+  },
+  "cook": {
+    "exit": "Exit",
+    "prev": "Previous",
+    "next": "Next",
+    "progress": "Step {{n}} of {{total}}",
+    "start": "Start",
+    "pause": "Pause",
+    "reset": "Reset",
+    "timerDone": "Timer finished!",
+    "otherTimers": "{{count}} other timers running"
+  }
 }

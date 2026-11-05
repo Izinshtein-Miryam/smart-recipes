@@ -36,9 +36,14 @@ def _get(db: DbSession, recipe_id: uuid.UUID) -> Recipe:
 
 @router.get("/recipes", response_model=list[RecipeOut], dependencies=[AdminOnly])
 def queue(
-    db: DbSession, status_: Annotated[RecipeStatus, Query(alias="status")] = RecipeStatus.PENDING
+    db: DbSession,
+    status_: Annotated[RecipeStatus, Query(alias="status")] = RecipeStatus.PENDING,
+    q: Annotated[str | None, Query(max_length=100)] = None,
 ) -> list[Recipe]:
-    stmt = select(Recipe).where(Recipe.status == status_).order_by(Recipe.created_at)
+    stmt = select(Recipe).where(Recipe.status == status_)
+    if q:
+        stmt = stmt.where(Recipe.title.ilike(f"%{q}%"))
+    stmt = stmt.order_by(Recipe.created_at)
     return list(db.scalars(stmt))
 
 

@@ -2,13 +2,15 @@
 
 import json
 import logging
-from typing import Any, TypeVar
+from collections.abc import Iterable, Iterator
+from typing import Any, TypeVar, cast
 
 import openai
 from pydantic import BaseModel, ValidationError
 from sqlalchemy.orm import Session
 
 from app.config import Settings
+from app.domain.servings import scale_ingredients
 from app.models import AiFeature, AiUsageLog, Recipe
 from app.schemas.ai import AdaptedRecipe, FridgeMatch, FridgeSearchResult, NutritionEstimate
 from app.services import prompts
@@ -161,20 +163,121 @@ class AiService:
 
     def adapt_recipe(self, db: Session, recipe: Recipe, instruction: str) -> AdaptedRecipe:
         payload = json.dumps(
-            {
-                "recipe": {
-                    "title": recipe.title,
-                    "description": recipe.description,
-                    "servings": recipe.servings,
-                    "prep_minutes": recipe.prep_minutes,
-                    "difficulty": recipe.difficulty.value,
-                    "equipment": [e.value for e in recipe.equipment],
-                    "kashrut": recipe.kashrut.value,
-                    "ingredients": recipe.ingredients,
-                    "steps": recipe.steps,
-                },
-                "instruction": instruction,
-            },
-            ensure_ascii=False,
+            {"recipe": _recipe_payload(recipe), "instruction": instruction}, ensure_ascii=False
         )
         return self.parse(db, AiFeature.ADAPT, prompts.ADAPT, payload, AdaptedRecipe)
+
+    # ---- Chat (streaming + tool loop) ---------------------------------------------------
+    def chat_stream(
+        self,
+        db: Session,
+        recipe: Recipe,
+        message: str,
+        previous_response_id: str | None,
+    ) -> Iterator[dict[str, Any]]:
+        """Yield SSE events (`event` name + `data` dict) for one chat message.
+
+        Events: text_delta, tool_started, recipe_adapted, recipe_scaled, done, error.
+        """
+        if self._client is None:
+            yield {"event": "error", "data": {"code": "ai_unavailable"}}
+            return
+        instructions = (
+            prompts.CHAT
+            + "\nThe open recipe (JSON): "
+            + json.dumps(_recipe_payload(recipe), ensure_ascii=False)
+        )
+        next_input: Any = message
+        prev_id = previous_response_id
+        for _round in range(MAX_TOOL_ROUNDS + 1):
+            try:
+                final: Any = None
+                stream = self._client.responses.create(
+                    model=self.model,
+                    instructions=instructions,
+                    input=next_input,
+                    previous_response_id=prev_id,
+                    tools=cast(Any, CHAT_TOOLS),
+                    stream=True,
+                )
+                for event in cast(Iterable[Any], stream):
+                    if event.type == "response.output_text.delta":
+                        yield {"event": "text_delta", "data": {"text": event.delta}}
+                    elif event.type == "response.completed":
+                        final = event.response
+                    elif event.type in ("response.failed", "response.incomplete"):
+                        raise AiUnavailableError(event.type)
+            except (openai.OpenAIError, AiUnavailableError) as exc:
+                log.warning("openai chat failed: %s", exc)
+                yield {"event": "error", "data": {"code": "ai_unavailable"}}
+                return
+            if final is None:
+                yield {"event": "error", "data": {"code": "ai_unavailable"}}
+                return
+            self.log_usage(db, AiFeature.CHAT, final)
+            calls: list[Any] = [
+                i for i in final.output if getattr(i, "type", None) == "function_call"
+            ]
+            if not calls:
+                yield {"event": "done", "data": {"response_id": final.id}}
+                return
+            if _round == MAX_TOOL_ROUNDS:
+                break
+            outputs = []
+            for call in calls:
+                yield {"event": "tool_started", "data": {"name": call.name}}
+                try:
+                    result, extra = self._run_tool(db, recipe, call.name, call.arguments)
+                except AiUnavailableError:
+                    yield {"event": "error", "data": {"code": "ai_unavailable"}}
+                    return
+                if extra is not None:
+                    yield extra
+                outputs.append(
+                    {
+                        "type": "function_call_output",
+                        "call_id": call.call_id,
+                        "output": json.dumps(result, ensure_ascii=False),
+                    }
+                )
+            next_input = outputs
+            prev_id = final.id
+        yield {"event": "done", "data": {"response_id": prev_id}}
+
+    def _run_tool(
+        self, db: Session, recipe: Recipe, name: str, arguments: str
+    ) -> tuple[Any, dict[str, Any] | None]:
+        try:
+            args = json.loads(arguments or "{}")
+        except json.JSONDecodeError:
+            return {"error": "invalid arguments"}, None
+        if name == "adapt_recipe":
+            adapted = self.adapt_recipe(db, recipe, str(args.get("instruction", "")))
+            event = {"event": "recipe_adapted", "data": adapted.model_dump(mode="json")}
+            return {"changes_summary": adapted.changes_summary, "feasible": adapted.feasible}, event
+        if name == "scale_servings":
+            try:
+                servings = int(args["servings"])
+                scaled = scale_ingredients(recipe.ingredients, recipe.servings, servings)
+            except (KeyError, ValueError, TypeError):
+                return {"error": "invalid servings"}, None
+            event = {
+                "event": "recipe_scaled",
+                "data": {"servings": servings, "ingredients": scaled},
+            }
+            return {"servings": servings, "ingredients": scaled}, event
+        return {"error": "unknown tool"}, None
+
+
+def _recipe_payload(recipe: Recipe) -> dict[str, Any]:
+    return {
+        "title": recipe.title,
+        "description": recipe.description,
+        "servings": recipe.servings,
+        "prep_minutes": recipe.prep_minutes,
+        "difficulty": recipe.difficulty.value,
+        "equipment": [e.value for e in recipe.equipment],
+        "kashrut": recipe.kashrut.value,
+        "ingredients": recipe.ingredients,
+        "steps": recipe.steps,
+    }

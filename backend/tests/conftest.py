@@ -2,6 +2,7 @@ import os
 import tempfile
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Any
 
 # Settings are read at import time, so configure the environment before importing `app`.
 TEST_DB = os.environ.get(
@@ -53,6 +54,12 @@ class FakeAi:
     def estimate_nutrition(self, db: Session, recipe: Recipe) -> NutritionEstimate:
         self._check()
         return NutritionEstimate(calories=100, protein_g=1, carbs_g=2, fat_g=3, confidence="medium")
+
+    def chat_stream(
+        self, db: Session, recipe: Recipe, message: str, previous_response_id: str | None
+    ) -> Iterator[dict[str, Any]]:
+        yield {"event": "text_delta", "data": {"text": "Lorem"}}
+        yield {"event": "done", "data": {"response_id": "resp_foo"}}
 
     def adapt_recipe(self, db: Session, recipe: Recipe, instruction: str) -> AdaptedRecipe:
         self._check()
@@ -132,4 +139,5 @@ def make_recipe(db: Session, **overrides: object) -> Recipe:
     recipe = Recipe(**{**values, **overrides})
     db.add(recipe)
     db.commit()
+    db.refresh(recipe)
     return recipe

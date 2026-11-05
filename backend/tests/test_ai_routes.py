@@ -50,7 +50,21 @@ def test_ai_failure_maps_to_503(client: TestClient, db: Session, fake_ai: FakeAi
     assert res.json() == {"detail": "ai_unavailable"}
 
 
-def test_chat_is_not_implemented_yet(client: TestClient, db: Session) -> None:
+def test_chat_streams_sse_events(client: TestClient, db: Session) -> None:
     recipe = make_recipe(db)
     res = client.post("/api/ai/chat", json={"recipe_id": str(recipe.id), "message": "foo"})
-    assert res.status_code == 501
+    assert res.status_code == 200
+    assert "event: text_delta" in res.text
+    assert "event: done" in res.text
+    assert "resp_foo" in res.text
+
+
+def test_chat_unknown_recipe_is_404(client: TestClient) -> None:
+    body = {"recipe_id": "00000000-0000-0000-0000-000000000000", "message": "foo"}
+    assert client.post("/api/ai/chat", json=body).status_code == 404
+
+
+def test_chat_message_length_is_limited(client: TestClient, db: Session) -> None:
+    recipe = make_recipe(db)
+    body = {"recipe_id": str(recipe.id), "message": "x" * 501}
+    assert client.post("/api/ai/chat", json=body).status_code == 422

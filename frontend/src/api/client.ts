@@ -49,3 +49,12 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   }
   return (res.status === 204 ? undefined : await res.json()) as T;
 }
+
+/** Like `api`, but also returns the `X-Total-Count` header (catalog pagination). */
+export async function apiWithTotal<T>(path: string): Promise<{ data: T; total: number }> {
+  const res = await fetch(`/api${path}`);
+  if (!res.ok) throw new ApiError(res.status, res.statusText);
+  const data = (await res.json()) as T;
+  const header = res.headers.get('X-Total-Count');
+  return { data, total: header ? Number(header) : 0 };
+}

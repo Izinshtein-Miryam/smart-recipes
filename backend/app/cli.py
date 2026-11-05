@@ -36,11 +36,23 @@ def purge_rejected() -> None:
     print(f"purged {len(recipes)} image(s)")
 
 
+def seed_demo() -> None:
+    """Loads the 50 demo recipes (safe to run more than once)."""
+    from app.seed import seed
+
+    with SessionLocal() as db:
+        print(f"added {seed(db)} demo recipe(s)")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="app.cli")
-    parser.add_argument("command", choices=["hash-admin-password", "purge-rejected"])
+    parser.add_argument("command", choices=["hash-admin-password", "purge-rejected", "seed"])
     args = parser.parse_args()
-    {"hash-admin-password": hash_admin_password, "purge-rejected": purge_rejected}[args.command]()
+    {
+        "hash-admin-password": hash_admin_password,
+        "purge-rejected": purge_rejected,
+        "seed": seed_demo,
+    }[args.command]()
 
 
 if __name__ == "__main__":

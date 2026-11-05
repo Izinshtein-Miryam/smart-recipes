@@ -7,7 +7,7 @@ import pytest
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
-from app.models import AiUsageLog
+from app.models import AiFeature, AiUsageLog
 from app.schemas.ai import FridgeMatch, FridgeSearchResult
 from app.services.ai_service import AiRefusalError, AiService, AiUnavailableError
 
@@ -128,3 +128,121 @@ def test_empty_output_without_refusal_is_unavailable(db: Session) -> None:
     client = FakeClient(reply(None))
     with pytest.raises(AiUnavailableError, match="empty structured output"):
         AiService(client, "m").estimate_nutrition(db, recipe)  # type: ignore[arg-type]
+
+
+# ---- chat streaming -----------------------------------------------------------------------
+def ev(type_: str, **kw: Any) -> Any:
+    return SimpleNamespace(type=type_, **kw)
+
+
+def completed(output: list[Any], rid: str) -> Any:
+    usage = SimpleNamespace(input_tokens=1, output_tokens=1)
+    return ev("response.completed", response=SimpleNamespace(id=rid, output=output, usage=usage))
+
+
+class ChatClient:
+    def __init__(self, *streams: Any) -> None:
+        self.streams = list(streams)
+        self.kwargs: list[dict[str, Any]] = []
+        self.responses = SimpleNamespace(create=self._create)
+
+    def _create(self, **kwargs: Any) -> Any:
+        self.kwargs.append(kwargs)
+        s = self.streams.pop(0)
+        if isinstance(s, Exception):
+            raise s
+        return s
+
+
+def call(name: str, args: str, cid: str = "call_foo") -> Any:
+    return SimpleNamespace(type="function_call", name=name, arguments=args, call_id=cid)
+
+
+def test_chat_stream_text_only(db: Session) -> None:
+    recipe = make_recipe(db)
+    client = ChatClient([ev("response.output_text.delta", delta="Lo"), completed([], "r1")])
+    events = list(AiService(client, "m").chat_stream(db, recipe, "foo", None))  # type: ignore[arg-type]
+    assert [e["event"] for e in events] == ["text_delta", "done"]
+    assert events[-1]["data"] == {"response_id": "r1"}
+    assert db.query(AiUsageLog).count() == 1
+
+
+def test_chat_stream_scale_tool_loop(db: Session) -> None:
+    recipe = make_recipe(db)  # 4 servings, bar 2 g
+    client = ChatClient(
+        [completed([call("scale_servings", '{"servings": 8}')], "r1")],
+        [ev("response.output_text.delta", delta="ok"), completed([], "r2")],
+    )
+    events = list(AiService(client, "m").chat_stream(db, recipe, "foo", "r0"))  # type: ignore[arg-type]
+    names = [e["event"] for e in events]
+    assert names == ["tool_started", "recipe_scaled", "text_delta", "done"]
+    assert events[1]["data"]["ingredients"][0]["quantity"] == 4.0
+    assert client.kwargs[0]["previous_response_id"] == "r0"
+    assert client.kwargs[1]["previous_response_id"] == "r1"
+    assert client.kwargs[1]["input"][0]["call_id"] == "call_foo"
+
+
+def test_chat_stream_tool_rounds_are_limited(db: Session) -> None:
+    recipe = make_recipe(db)
+    loop = [completed([call("scale_servings", '{"servings": 2}')], f"r{i}") for i in range(4)]
+    client = ChatClient(*([x] for x in loop))
+    events = list(AiService(client, "m").chat_stream(db, recipe, "foo", None))  # type: ignore[arg-type]
+    assert len(client.kwargs) == 4  # 1 + MAX_TOOL_ROUNDS
+    assert events[-1]["event"] == "done"
+
+
+def test_chat_stream_adapt_tool(db: Session, monkeypatch: pytest.MonkeyPatch) -> None:
+    from app.schemas.ai import AdaptedRecipe
+
+    recipe = make_recipe(db)
+    adapted = AdaptedRecipe(
+        title="foo", description="", servings=2, prep_minutes=5, difficulty=recipe.difficulty,
+        equipment=[], kashrut=recipe.kashrut, ingredients=[], steps=["baz"],
+        changes_summary=["bar"], feasible=True, reason=None,
+    )  # fmt: skip
+    client = ChatClient(
+        [completed([call("adapt_recipe", '{"instruction": "foo"}')], "r1")],
+        [completed([], "r2")],
+    )
+    service = AiService(client, "m")  # type: ignore[arg-type]
+    monkeypatch.setattr(service, "adapt_recipe", lambda *_a: adapted)
+    events = list(service.chat_stream(db, recipe, "foo", None))
+    assert [e["event"] for e in events] == ["tool_started", "recipe_adapted", "done"]
+
+
+def test_chat_stream_bad_tool_arguments_do_not_crash(db: Session) -> None:
+    recipe = make_recipe(db)
+    client = ChatClient(
+        [completed([call("scale_servings", "not json"), call("nope", "{}", "c2")], "r1")],
+        [completed([], "r2")],
+    )
+    events = list(AiService(client, "m").chat_stream(db, recipe, "foo", None))  # type: ignore[arg-type]
+    assert events[-1]["event"] == "done"
+
+
+def test_chat_stream_errors(db: Session) -> None:
+    recipe = make_recipe(db)
+    no_key = list(AiService(None, "m").chat_stream(db, recipe, "foo", None))
+    assert no_key == [{"event": "error", "data": {"code": "ai_unavailable"}}]
+    boom = ChatClient(status_error(500))
+    events = list(AiService(boom, "m").chat_stream(db, recipe, "foo", None))  # type: ignore[arg-type]
+    assert events[0]["event"] == "error"
+    failed = ChatClient([ev("response.failed")])
+    events = list(AiService(failed, "m").chat_stream(db, recipe, "foo", None))  # type: ignore[arg-type]
+    assert events[0]["event"] == "error"
+    empty = ChatClient([])
+    events = list(AiService(empty, "m").chat_stream(db, recipe, "foo", None))  # type: ignore[arg-type]
+    assert events[0]["event"] == "error"
+
+
+def test_timeout_is_a_single_attempt_and_maps_to_unavailable(db: Session) -> None:
+    from app.config import Settings
+
+    service = AiService.from_settings(Settings(openai_api_key="sk-foo"))
+    assert service._client is not None
+    assert service._client.max_retries == 0
+    assert service._client.timeout == 30.0
+    req = httpx.Request("POST", "http://x")
+    client = FakeClient(openai.APITimeoutError(request=req))  # type: ignore[arg-type]
+    with pytest.raises(AiUnavailableError):
+        AiService(client, "m").parse(db, AiFeature.NUTRITION, "i", "p", FridgeSearchResult)  # type: ignore[arg-type]
