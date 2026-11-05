@@ -117,3 +117,20 @@ def test_list_recipes_pagination_and_total(client: TestClient, db: Session) -> N
     res = client.get("/api/recipes?limit=2&offset=2")
     assert len(res.json()) == 1
     assert res.headers["x-total-count"] == "3"
+
+
+def test_submit_without_description_is_allowed(client: TestClient) -> None:
+    ingredient = '[{"name":"bar","quantity":null,"unit":null,"note":null}]'
+    form = {
+        "lang": "he",
+        "title": "foo",
+        "servings": "2",
+        "prep_minutes": "5",
+        "difficulty": "easy",
+        "kashrut": "parve",
+        "ingredients": ingredient,
+        "steps": '["baz"]',
+    }
+    res = client.post("/api/recipes", data=form)
+    assert res.status_code == 201
+    assert res.json()["description"] == ""

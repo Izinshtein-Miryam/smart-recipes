@@ -1,13 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
-import { api } from './client';
+import { api, apiWithTotal } from './client';
 import type { Recipe, RecipeFilters, RecipeSummary } from './types';
 
-function toQuery(filters: RecipeFilters): string {
+export function toQuery(filters: Record<string, unknown>): string {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(filters)) {
-    if (value === undefined || value === '') continue;
-    if (Array.isArray(value)) value.forEach((v) => params.append(key, v));
+    if (value === undefined || value === null || value === '') continue;
+    if (Array.isArray(value)) value.forEach((v) => params.append(key, String(v)));
     else params.set(key, String(value));
   }
   const qs = params.toString();
@@ -17,14 +17,16 @@ function toQuery(filters: RecipeFilters): string {
 export function useRecipes(filters: RecipeFilters = {}) {
   return useQuery({
     queryKey: ['recipes', filters],
-    queryFn: () => api<RecipeSummary[]>(`/recipes${toQuery(filters)}`),
+    queryFn: () => apiWithTotal<RecipeSummary[]>(`/recipes${toQuery({ ...filters })}`),
+    placeholderData: keepPreviousData,
   });
 }
 
-export function useRecipe(id: string | undefined) {
+export function useRecipe(id: string | undefined, servings?: number) {
   return useQuery({
-    queryKey: ['recipe', id],
-    queryFn: () => api<Recipe>(`/recipes/${id}`),
+    queryKey: ['recipe', id, servings ?? null],
+    queryFn: () => api<Recipe>(`/recipes/${id}${toQuery({ servings })}`),
     enabled: Boolean(id),
+    placeholderData: keepPreviousData,
   });
 }

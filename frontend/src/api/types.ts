@@ -52,4 +52,30 @@ export interface RecipeFilters {
   equipment?: Equipment[];
   servings?: number;
   kashrut?: Kashrut;
+  limit?: number;
+  offset?: number;
+}
+
+export interface RecipeContent {
+  title: string;
+  description: string;
+  servings: number;
+  prep_minutes: number;
+  difficulty: Difficulty;
+  equipment: Equipment[];
+  kashrut: Kashrut;
+  ingredients: Ingredient[];
+  steps: string[];
+}
+
+export interface AdaptedRecipe extends RecipeContent {
+  changes_summary: string[];
+  feasible: boolean;
+  reason: string | null;
+}
+
+export interface FridgeSearchItem {
+  recipe: RecipeSummary;
+  match_score: number;
+  missing_ingredients: string[];
 }
