@@ -1,38 +1,48 @@
 from fastapi.testclient import TestClient
+from sqlalchemy import ColumnElement
 from sqlalchemy.orm import Session
 
-from app.models import Recipe, RecipeStatus
+from app.models import Difficulty, DishType, KosherType, Recipe, RecipeStatus
 from app.seed import seed
 
 
-def test_list_recipes(client: TestClient) -> None:
-    res = client.get("/api/recipes")
+def _count(db: Session, *criteria: ColumnElement[bool]) -> int:
+    return db.query(Recipe).filter(*criteria).count()
+
+
+def test_list_recipes(client: TestClient, seeded_db: Session) -> None:
+    res = client.get("/api/recipes", params={"page_size": 100})
     assert res.status_code == 200
     body = res.json()
-    assert body["total"] == 3
+    assert body["total"] == _count(seeded_db) >= 50
     assert {r["slug"] for r in body["items"]} >= {"shakshuka-yeruka", "salat-kinoa"}
 
 
-def test_list_filters(client: TestClient) -> None:
-    assert client.get("/api/recipes", params={"kosher_type": "dairy"}).json()["total"] == 1
-    assert client.get("/api/recipes", params={"kosher_type": "meat"}).json()["total"] == 1
-    assert client.get("/api/recipes", params={"dish_type": "main"}).json()["total"] == 2
-    assert client.get("/api/recipes", params={"max_minutes": 25}).json()["total"] == 1
-    assert client.get("/api/recipes", params={"difficulty": "medium"}).json()["total"] == 1
-    assert client.get("/api/recipes", params={"q": "קינואה"}).json()["total"] == 1
+def test_list_filters(client: TestClient, seeded_db: Session) -> None:
+    def total(**params: str | int) -> int:
+        return int(client.get("/api/recipes", params=params).json()["total"])
+
+    assert total(kosher_type="dairy") == _count(seeded_db, Recipe.kosher_type == KosherType.DAIRY)
+    assert total(kosher_type="meat") == _count(seeded_db, Recipe.kosher_type == KosherType.MEAT)
+    assert total(dish_type="main") == _count(seeded_db, Recipe.dish_type == DishType.MAIN)
+    fast = Recipe.prep_minutes + Recipe.cook_minutes <= 25
+    assert total(max_minutes=25) == _count(seeded_db, fast)
+    assert total(difficulty="medium") == _count(seeded_db, Recipe.difficulty == Difficulty.MEDIUM)
+    assert total(q="קינואה") == 1
 
 
-def test_pagination(client: TestClient) -> None:
+def test_pagination(client: TestClient, seeded_db: Session) -> None:
     body = client.get("/api/recipes", params={"page_size": 2, "page": 2}).json()
-    assert len(body["items"]) == 1
+    assert len(body["items"]) == 2
     assert body["page"] == 2
 
 
 def test_hidden_recipes_not_listed(client: TestClient, seeded_db: Session) -> None:
+    before = client.get("/api/recipes").json()["total"]
     recipe = seeded_db.query(Recipe).filter_by(slug="salat-kinoa").one()
     recipe.status = RecipeStatus.HIDDEN
     seeded_db.commit()
-    assert client.get("/api/recipes").json()["total"] == 2
+    assert client.get("/api/recipes").json()["total"] == before - 1
     assert client.get("/api/recipes/salat-kinoa").status_code == 404
 
 
