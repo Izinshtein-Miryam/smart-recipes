@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>דף מגניב</title>
+<style>
+  :root { --a:#00e5ff; --b:#7c4dff; --c:#ff4081; }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; overflow: hidden; background: #070714; font-family: system-ui, sans-serif; }
+  canvas { position: fixed; inset: 0; }
+  .wrap { position: fixed; inset: 0; display: grid; place-items: center; perspective: 900px; }
+  .card {
+    width: min(90vw, 420px); padding: 36px 28px; text-align: center; color: #fff;
+    background: rgba(255,255,255,.06); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,.18); border-radius: 22px;
+    box-shadow: 0 0 60px rgba(124,77,255,.35);
+    transition: transform .08s ease-out;
+  }
+  h1 {
+    font-size: 2.4rem; margin-bottom: 10px;
+    background: linear-gradient(90deg, var(--a), var(--b), var(--c), var(--a));
+    background-size: 300% 100%; -webkit-background-clip: text; background-clip: text;
+    color: transparent; animation: flow 6s linear infinite;
+  }
+  p { opacity: .8; margin-bottom: 22px; line-height: 1.6; }
+  .counter { font-size: 3rem; font-weight: 700; margin: 6px 0 18px; text-shadow: 0 0 20px var(--a); }
+  button {
+    border: 0; padding: 12px 26px; border-radius: 999px; font-size: 1rem; cursor: pointer; color: #fff;
+    background: linear-gradient(90deg, var(--b), var(--c)); box-shadow: 0 0 22px rgba(255,64,129,.5);
+    transition: transform .15s;
+  }
+  button:hover { transform: scale(1.08); }
+  button:active { transform: scale(.95); }
+  @keyframes flow { to { background-position: -300% 0; } }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="wrap">
+  <div class="card" id="card">
+    <h1>Lorem Ipsum</h1>
+    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. הזיזו את העכבר או האצבע, ולחצו על הכפתור.</p>
+    <div class="counter" id="n">0</div>
+    <button id="btn">foo bar baz</button>
+  </div>
+</div>
+
+<script>
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+let W, H, pts = [], mouse = { x: -999, y: -999 };
+
+function resize() {
+  W = cv.width = innerWidth; H = cv.height = innerHeight;
+  pts = Array.from({ length: Math.min(120, Math.floor(W * H / 12000)) }, () => ({
+    x: Math.random() * W, y: Math.random() * H,
+    vx: (Math.random() - .5) * .8, vy: (Math.random() - .5) * .8
+  }));
+}
+addEventListener('resize', resize); resize();
+
+function setPointer(e) {
+  const t = e.touches ? e.touches[0] : e;
+  mouse.x = t.clientX; mouse.y = t.clientY;
+  const rx = (mouse.y / H - .5) * -14, ry = (mouse.x / W - .5) * 14;
+  card.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+}
+addEventListener('mousemove', setPointer);
+addEventListener('touchmove', setPointer, { passive: true });
+
+let hue = 180;
+function frame() {
+  ctx.clearRect(0, 0, W, H);
+  hue = (hue + .3) % 360;
+  for (const p of pts) {
+    p.x += p.vx; p.y += p.vy;
+    if (p.x < 0 || p.x > W) p.vx *= -1;
+    if (p.y < 0 || p.y > H) p.vy *= -1;
+    const dx = p.x - mouse.x, dy = p.y - mouse.y, d = Math.hypot(dx, dy);
+    if (d < 140) { p.x += dx / d * 2; p.y += dy / d * 2; }
+    ctx.fillStyle = `hsl(${hue},100%,65%)`;
+    ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, 7); ctx.fill();
+  }
+  for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
+    const d = Math.hypot(pts[i].x - pts[j].x, pts[i].y - pts[j].y);
+    if (d < 110) {
+      ctx.strokeStyle = `hsla(${hue},100%,65%,${1 - d / 110})`;
+      ctx.beginPath(); ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[j].x, pts[j].y); ctx.stroke();
+    }
+  }
+  requestAnimationFrame(frame);
+}
+frame();
+
+const card = document.getElementById('card');
+let n = 0;
+document.getElementById('btn').onclick = () => {
+  document.getElementById('n').textContent = ++n;
+  for (const p of pts) { p.vx *= 3; p.vy *= 3; }
+  setTimeout(() => pts.forEach(p => { p.vx /= 3; p.vy /= 3; }), 400);
+};
+</script>
+</body>
+</html>
